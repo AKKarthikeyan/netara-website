@@ -218,84 +218,238 @@ code{font-family:var(--font-m);font-size:11px;background:var(--cream-d);padding:
 
 <script>
 const PY = `
-import re, json
-import pandas as pd
-from io import StringIO
+import json
 
 def parse_cams_pdf_text(raw_text):
-    import re
     funds = []
-    text = re.sub(r' {3,}', '\n', raw_text)
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    blocks = re.split(r'(?=Folio\s*No[.\s]*:)', text, flags=re.IGNORECASE)
-    for block in blocks:
-        if not block.strip() or len(block) < 50: continue
-        lines = [l.strip() for l in block.split('\n') if l.strip()]
+    # Split on folio boundaries
+    text = raw_text
+    parts = text.split("Folio N")
+    if len(parts) < 2:
+        return funds
+    for part in parts[1:]:
+        block = "Folio N" + part
+        # Split into lines, handle both newline and 3-space separation
+        block_norm = block
+        lines = []
+        for chunk in block_norm.split("\n"):
+            chunk = chunk.strip()
+            if chunk:
+                lines.append(chunk)
+        # Find scheme name line
         scheme_name = None
         plan = None
         for line in lines:
-            if re.match(r'^(Folio|PAN|KYC|Registrar|Advisor|Opening|Closing|Date|Transaction|\d)', line, re.IGNORECASE): continue
-            if len(line) < 10: continue
-            if re.search(r'\b(Fund|Scheme)\b', line, re.IGNORECASE):
-                if re.search(r'\b(Regular|Direct)\b', line, re.IGNORECASE) or re.search(r'Fund\s*[-]', line, re.IGNORECASE):
-                    scheme_name = line
-                    plan = 'Direct' if re.search(r'\bDirect\b', line, re.IGNORECASE) else 'Regular'
+            low = line.lower()
+            # Skip known non-scheme lines
+            skip = False
+            for skip_word in ["folio", "pan:", "kyc:", "registrar", "advisor", "opening", "closing balance", "closing unit", "transaction", "systematic", "purchase", "redemption", "switch"]:
+                if low.startswith(skip_word):
+                    skip = True
                     break
-        if not scheme_name: continue
-        if plan == 'Regular' and re.search(r'Advisor\s*:\s*DIRECT', block, re.IGNORECASE): plan = 'Direct'
-        clean = re.sub(r'\s*[-]\s*(Regular|Direct)\s*(Plan)?\s*[-]?\s*(Growth|Dividend|IDCW|Bonus|Option)?.*$', '', scheme_name, flags=re.IGNORECASE).strip()
-        clean = re.sub(r'[-\s]+$', '', clean).strip()
-        clean = re.sub(r'\s+', ' ', clean)
-        if len(clean) < 5: continue
+            if skip:
+                continue
+            if line and line[0].isdigit():
+                continue
+            if len(line) < 8:
+                continue
+            # Must contain Fund or Scheme
+            if "fund" not in low and "scheme" not in low:
+                continue
+            # Must contain plan info or hyphen (scheme name separator)
+            if "regular" in low:
+                scheme_name = line
+                plan = "Regular"
+                break
+            elif "direct" in low:
+                scheme_name = line
+                plan = "Direct"
+                break
+            elif " - " in line and "fund" in low:
+                scheme_name = line
+                plan = "Regular"
+                break
+        if not scheme_name:
+            continue
+        # Check advisor line for DIRECT override
+        if plan == "Regular":
+            for line in lines:
+                if "advisor" in line.lower() and "direct" in line.upper():
+                    plan = "Direct"
+                    break
+        # Clean scheme name - cut at plan separator
+        clean = scheme_name
+        for sep in [" - Regular Plan", " - Direct Plan", " - Regular", " - Direct",
+                    "-Regular Plan", "-Direct Plan", "-Regular", "-Direct",
+                    " Regular Plan", " Direct Plan"]:
+            idx = clean.lower().find(sep.lower())
+            if idx > 0:
+                clean = clean[:idx]
+                break
+        clean = clean.strip().strip("-").strip()
+        if len(clean) < 5:
+            continue
+        # Find current value
         value = None
-        for pat in [r'Market\s+Value\s+as\s+on[^:]*:\s*Rs\.?\s*([\d,]+\.?\d*)', r'Market\s+Value[^R\n]*Rs\.?\s*([\d,]+\.?\d*)', r'Value\s+as\s+on[^:]*:\s*Rs\.?\s*([\d,]+\.?\d*)', r'Value\s*\(Rs\.\)\s*:\s*([\d,]+\.?\d*)', r'Value\s*:\s*Rs\.?\s*([\d,]+\.?\d*)', r'Value\s*Rs\.\s*([\d,]+\.?\d*)']:
-            m = re.search(pat, block, re.IGNORECASE)
-            if m:
-                v = float(m.group(1).replace(',',''))
-                if v > 100: value = v; break
+        for line in lines:
+            low = line.lower()
+            if "market value" in low or ("value" in low and "rs" in low):
+                # Extract numbers from this line
+                num_str = ""
+                candidates = []
+                i = 0
+                while i < len(line):
+                    ch = line[i]
+                    if ch.isdigit():
+                        num_str = ch
+                        i += 1
+                        while i < len(line) and (line[i].isdigit() or line[i] in ".,"):
+                            num_str += line[i]
+                            i += 1
+                        try:
+                            v = float(num_str.replace(",", ""))
+                            if v > 500:
+                                candidates.append(v)
+                        except:
+                            pass
+                        num_str = ""
+                    else:
+                        i += 1
+                if candidates:
+                    value = max(candidates)
+                    break
+        # Fallback: find numbers after "Rs" in the block
         if not value:
-            rs = re.findall(r'Rs\.?\s*([\d,]+\.?\d*)', block, re.IGNORECASE)
-            cands = [float(x.replace(',','')) for x in rs if float(x.replace(',','')) > 1000]
-            if cands: value = max(cands)
-        if not value or value <= 0: continue
+            idx = 0
+            candidates = []
+            while True:
+                rs_idx = block.lower().find("rs", idx)
+                if rs_idx < 0:
+                    break
+                after_rs = block[rs_idx+2:rs_idx+20].strip().lstrip(".")
+                num_str = ""
+                for ch in after_rs:
+                    if ch.isdigit() or (ch == "," and len(num_str) > 0) or (ch == "." and "." not in num_str):
+                        num_str += ch
+                    else:
+                        break
+                if num_str:
+                    try:
+                        v = float(num_str.replace(",", ""))
+                        if v > 500:
+                            candidates.append(v)
+                    except:
+                        pass
+                idx = rs_idx + 2
+            if candidates:
+                value = max(candidates)
+        if not value or value <= 0:
+            continue
+        # NAV
         nav = 0.0
-        for pat in [r'NAV\s+as\s+on[^:]*:\s*Rs\.?\s*([\d,]+\.?\d+)', r'NAV\s*\(Rs\.\)\s*:\s*([\d,]+\.?\d+)', r'NAV\s*:\s*Rs\.?\s*([\d,]+\.?\d+)', r'@\s*NAV\s+of\s+Rs\.?\s*([\d,]+\.?\d+)']:
-            m = re.search(pat, block, re.IGNORECASE)
-            if m: nav = float(m.group(1).replace(',','')); break
-        units = 0.0
-        um = re.search(r'(?:Closing\s+)?Units?\s*:?\s*([\d,]+\.?\d*)', block, re.IGNORECASE)
-        if um:
-            try: units = float(um.group(1).replace(',',''))
-            except: pass
-        funds.append({'Scheme_Name': clean, 'Scheme_Plan': plan, 'Current_Value': value, 'Units': units, 'Nav': nav})
+        for line in lines:
+            if "nav" in line.lower():
+                num_str = ""
+                for ch in line:
+                    if ch.isdigit() or (ch in ".," and num_str):
+                        num_str += ch
+                    elif num_str and not ch.isdigit():
+                        try:
+                            v = float(num_str.replace(",", ""))
+                            if 1 < v < 100000:
+                                nav = v
+                                break
+                        except:
+                            pass
+                        num_str = ""
+                if nav:
+                    break
+        funds.append({
+            "Scheme_Name": clean,
+            "Scheme_Plan": plan,
+            "Current_Value": value,
+            "Units": 0.0,
+            "Nav": nav
+        })
     return funds
 
+def calculate_irr(premiums, maturity_value, years):
+    total = sum(premiums)
+    if total == 0 or years == 0: return 0
+    return ((maturity_value / total) ** (1.0/years) - 1) * 100
+
+def fv_leakage(annual_leakage, years, rate=0.12):
+    fv = 0
+    for i in range(years):
+        fv += annual_leakage * ((1 + rate) ** (years - 1 - i))
+    return fv
+
 def analyze_portfolio(funds_list, insurance_data=None, gold_data=None, equity_data=None):
-    regular = [f for f in funds_list if f['Scheme_Plan'] == 'Regular']
+    regular = [f for f in funds_list if f["Scheme_Plan"] == "Regular"]
     leakage_report = []
     for f in regular:
-        leak = f['Current_Value'] * 0.01
-        leakage_report.append({'scheme_name': f['Scheme_Name'], 'current_value': float(f['Current_Value']), 'annual_leakage': float(leak), 'leakage_5yr_compounded': float(fv_leakage(leak, 5)), 'leakage_10yr_compounded': float(fv_leakage(leak, 10))})
+        leak = f["Current_Value"] * 0.01
+        leakage_report.append({
+            "scheme_name": f["Scheme_Name"],
+            "current_value": float(f["Current_Value"]),
+            "annual_leakage": float(leak),
+            "leakage_5yr_compounded": float(fv_leakage(leak, 5)),
+            "leakage_10yr_compounded": float(fv_leakage(leak, 10))
+        })
     insurance_audit = []
     if insurance_data:
         for p in insurance_data:
-            irr = calculate_irr(p['premiums'], p['maturity_value'], p['years'])
-            insurance_audit.append({'policy_name': p['name'], 'irr': round(float(irr), 2), 'opportunity_cost': float(p['maturity_value'] * (0.12 - irr/100))})
+            irr = calculate_irr(p["premiums"], p["maturity_value"], p["years"])
+            insurance_audit.append({
+                "policy_name": p["name"],
+                "irr": round(float(irr), 2),
+                "opportunity_cost": float(p["maturity_value"] * (0.12 - irr/100))
+            })
     gold_audit = []
     if gold_data:
         for g in gold_data:
-            cost = g['current_value'] * 0.03
-            gold_audit.append({'type': g['type'], 'current_value': float(g['current_value']), 'annual_leakage': float(cost), 'leakage_10yr_compounded': float(fv_leakage(cost, 10))})
+            cost = g["current_value"] * 0.03
+            gold_audit.append({
+                "type": g["type"],
+                "current_value": float(g["current_value"]),
+                "annual_leakage": float(cost),
+                "leakage_10yr_compounded": float(fv_leakage(cost, 10))
+            })
     equity_audit = []
     if equity_data:
         for e in equity_data:
-            leak = e.get('brokerage',0) + e.get('stt',0) + e.get('idle_cash',0)*0.12
-            equity_audit.append({'type': e.get('type','Equity'), 'annual_leakage': float(leak), 'leakage_10yr_compounded': float(fv_leakage(leak, 10))})
-    mf_leak = sum(x['annual_leakage'] for x in leakage_report)
-    gold_leak = sum(x['annual_leakage'] for x in gold_audit)
-    eq_leak = sum(x['annual_leakage'] for x in equity_audit)
-    total_aum = sum(f['Current_Value'] for f in funds_list)
-    return json.dumps({'net_yield_calculator_input': {'regular_vs_direct_leakage': leakage_report, 'total_annual_leakage': float(mf_leak+gold_leak+eq_leak), 'leakage_breakdown': {'mutual_funds': float(mf_leak), 'gold': float(gold_leak), 'equity': float(eq_leak)}, 'insurance_audit': insurance_audit, 'gold_audit': gold_audit, 'equity_audit': equity_audit, 'portfolio_summary': {'total_funds': len(funds_list), 'regular_funds': len(regular), 'direct_funds': len(funds_list)-len(regular), 'total_aum': float(total_aum), 'regular_aum': float(sum(f['Current_Value'] for f in regular)), 'direct_aum': float(sum(f['Current_Value'] for f in funds_list if f['Scheme_Plan']=='Direct'))}}})
+            leak = e.get("brokerage", 0) + e.get("stt", 0) + e.get("idle_cash", 0) * 0.12
+            equity_audit.append({
+                "type": e.get("type", "Equity"),
+                "annual_leakage": float(leak),
+                "leakage_10yr_compounded": float(fv_leakage(leak, 10))
+            })
+    mf_leak = sum(x["annual_leakage"] for x in leakage_report)
+    gold_leak = sum(x["annual_leakage"] for x in gold_audit)
+    eq_leak = sum(x["annual_leakage"] for x in equity_audit)
+    total_aum = sum(f["Current_Value"] for f in funds_list)
+    return json.dumps({
+        "net_yield_calculator_input": {
+            "regular_vs_direct_leakage": leakage_report,
+            "total_annual_leakage": float(mf_leak + gold_leak + eq_leak),
+            "leakage_breakdown": {
+                "mutual_funds": float(mf_leak),
+                "gold": float(gold_leak),
+                "equity": float(eq_leak)
+            },
+            "insurance_audit": insurance_audit,
+            "gold_audit": gold_audit,
+            "equity_audit": equity_audit,
+            "portfolio_summary": {
+                "total_funds": len(funds_list),
+                "regular_funds": len(regular),
+                "direct_funds": len(funds_list) - len(regular),
+                "total_aum": float(total_aum),
+                "regular_aum": float(sum(f["Current_Value"] for f in regular)),
+                "direct_aum": float(sum(f["Current_Value"] for f in funds_list if f["Scheme_Plan"] == "Direct"))
+            }
+        }
+    })
 `;
 </script>
 
