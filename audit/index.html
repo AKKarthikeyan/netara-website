@@ -406,7 +406,7 @@ function colG(){const d=[];document.querySelectorAll('[id^="gv-"]').forEach(el=>
 function colE(){const d=[];document.querySelectorAll('[id^="eb-"]').forEach(el=>{const id=el.id.split('-').pop();const b=parseFloat(el.value)||0,s=parseFloat(document.getElementById('es-'+id)?.value)||0,i=parseFloat(document.getElementById('ei-'+id)?.value)||0;if(b||s||i)d.push({type:'Direct Equity',brokerage:b,stt:s,idle_cash:i});});return d.length?d:null;}
 
 async function extractText(bytes, pwd) {
-  const task=window._pdfjs.getDocument({data:bytes,password:pwd||''});
+  const task=window._pdfjs.getDocument({data:bytes.slice(),password:pwd||''});
   let pdf;
   try{pdf=await task.promise;}
   catch(e){if(e.name==='PasswordException'||e.message.includes('password'))throw new Error('Incorrect password. Check the password you set on camsonline.com.');throw e;}
@@ -430,6 +430,8 @@ window.runAudit = async function() {
       const txt=await extractText(pdfBytes,pwd);
       log('Text extracted: '+txt.length+' chars','info');
       log('Parsing CAMS statement in Python\u2026','info');
+      console.log('=== RAW PDF TEXT SAMPLE ===');
+      console.log(_txt.substring(0, 4000));
       pyodide.globals.set('_txt',txt);
       const fj=await pyodide.runPythonAsync('import json; json.dumps(parse_cams_pdf_text(_txt))');
       funds=JSON.parse(fj);
