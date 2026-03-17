@@ -427,7 +427,13 @@ function colEq() {
 
 // ── PDF extraction ────────────────────────────────────
 async function extractText(bytes, pwd) {
-  if (!window.pdfjsLib) throw new Error("pdf.js not loaded");
+  // Wait up to 5 seconds for pdf.js to load
+  var waited = 0;
+  while (!window.pdfjsLib && waited < 50) {
+    await new Promise(function(r){ setTimeout(r, 100); });
+    waited++;
+  }
+  if (!window.pdfjsLib) throw new Error("pdf.js failed to load. Please refresh and try again.");
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js";
   var task = window.pdfjsLib.getDocument({data: bytes.slice(), password: pwd||""});
   var pdf;
