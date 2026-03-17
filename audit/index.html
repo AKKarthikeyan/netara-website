@@ -194,77 +194,86 @@ function cmpd(a, y) {
 // ── CAMS PDF Parser (pure JS) ─────────────────────────
 function parseCams(text) {
   var funds = [];
-  var parts = text.split("Folio N");
-  if (parts.length < 2) return funds;
-  for (var pi = 1; pi < parts.length; pi++) {
-    var block = "Folio N" + parts[pi];
-    var lines = [];
-    var rawLines = block.split("\n");
-    for (var li = 0; li < rawLines.length; li++) {
-      var l = rawLines[li].trim();
-      if (l) lines.push(l);
+  // This CAS Summary format: FOLIO  VALUE  CODE - FUND NAME - PLAN  UNITS  DD-Mon-YYYY  NAV  REG  ISIN  COST
+  var months = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec";
+  var entryRe = new RegExp(
+    "([\\d,]+\\.\\d{2})\\s+" +          // market value
+    "[A-Z0-9]+\\s+-\\s+" +                   // scheme code -
+    "(.*?)\\s+" +                               // fund name + plan
+    "[\\d,]+\\.\\d+\\s+" +               // units
+    "\\d{2}-(?:" + months + ")-\\d{4}",      // date
+    "gi"
+  );
+  var match;
+  while ((match = entryRe.exec(text)) !== null) {
+    var value = parseFloat(match[1].replace(/,/g, ""));
+    var fullName = match[2].trim();
+    var low = fullName.toLowerCase();
+    var plan = low.indexOf("direct") >= 0 ? "Direct" : low.indexOf("regular") >= 0 ? "Regular" : "Direct";
+    var name = fullName;
+    var suffixes = [
+      " - Direct Plan Growth"," - Direct Growth"," - Direct Plan",
+      " - Regular Plan Growth"," - Regular Growth"," - Regular Plan",
+      " Direct Plan Growth"," Direct Growth"," Direct Plan",
+      " Regular Growth"," Regular Plan",
+      " - Direct"," - Regular",
+      " (Demat)"," (formerly"," - Growth"
+    ];
+    for (var si = 0; si < suffixes.length; si++) {
+      var idx = name.toLowerCase().indexOf(suffixes[si].toLowerCase());
+      if (idx > 0) { name = name.substring(0, idx); break; }
     }
-    var schemeName = null, plan = null;
-    var skipWords = ["folio","pan:","kyc:","registrar","advisor","opening","closing","date","transaction","systematic","purchase","redemption","switch"];
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i];
-      var low = line.toLowerCase();
-      var skip = false;
-      for (var si = 0; si < skipWords.length; si++) {
-        if (low.indexOf(skipWords[si]) === 0) { skip = true; break; }
-      }
-      if (skip || (line.length > 0 && line[0] >= "0" && line[0] <= "9") || line.length < 8) continue;
-      if (low.indexOf("fund") < 0 && low.indexOf("scheme") < 0) continue;
-      if (low.indexOf("regular") >= 0) { schemeName = line; plan = "Regular"; break; }
-      if (low.indexOf("direct") >= 0) { schemeName = line; plan = "Direct"; break; }
-      if (line.indexOf(" - ") >= 0 && low.indexOf("fund") >= 0) { schemeName = line; plan = "Regular"; break; }
+    name = name.replace(/[-\s]+$/, "").trim();
+    if (value > 0 && name.length > 5) {
+      funds.push({ name: name, plan: plan, value: value });
     }
-    if (!schemeName) continue;
-    if (plan === "Regular") {
+  }
+  // Fallback to old Folio-based parser if nothing found
+  if (funds.length === 0) {
+    var parts = text.split("Folio N");
+    for (var pi = 1; pi < parts.length; pi++) {
+      var block = "Folio N" + parts[pi];
+      var lines = block.split("\n");
+      var schemeName = null, planF = null;
+      var skipWords = ["folio","pan:","kyc:","registrar","advisor","opening","closing","date","transaction","systematic","purchase","redemption","switch"];
       for (var i = 0; i < lines.length; i++) {
-        if (lines[i].toLowerCase().indexOf("advisor") >= 0 && lines[i].toUpperCase().indexOf("DIRECT") >= 0) {
-          plan = "Direct"; break;
+        var line = lines[i].trim();
+        var linelow = line.toLowerCase();
+        var skip = false;
+        for (var si2 = 0; si2 < skipWords.length; si2++) {
+          if (linelow.indexOf(skipWords[si2]) === 0) { skip = true; break; }
+        }
+        if (skip || (line.length > 0 && line[0] >= "0" && line[0] <= "9") || line.length < 8) continue;
+        if (linelow.indexOf("fund") < 0 && linelow.indexOf("scheme") < 0) continue;
+        if (linelow.indexOf("regular") >= 0) { schemeName = line; planF = "Regular"; break; }
+        if (linelow.indexOf("direct") >= 0) { schemeName = line; planF = "Direct"; break; }
+        if (line.indexOf(" - ") >= 0 && linelow.indexOf("fund") >= 0) { schemeName = line; planF = "Regular"; break; }
+      }
+      if (!schemeName) continue;
+      var cleanF = schemeName;
+      var sepsF = [" - Regular Plan"," - Direct Plan"," - Regular"," - Direct","-Regular","-Direct"];
+      for (var si3 = 0; si3 < sepsF.length; si3++) {
+        var idxF = cleanF.toLowerCase().indexOf(sepsF[si3].toLowerCase());
+        if (idxF > 0) { cleanF = cleanF.substring(0, idxF); break; }
+      }
+      cleanF = cleanF.replace(/[-\s]+$/, "").trim();
+      if (cleanF.length < 5) continue;
+      var valF = null;
+      for (var i2 = 0; i2 < lines.length; i2++) {
+        var ll = lines[i2].toLowerCase();
+        if (ll.indexOf("market value") >= 0 || (ll.indexOf("value") >= 0 && ll.indexOf("rs") >= 0)) {
+          var nums = lines[i2].match(/[\d,]+\.?\d*/g) || [];
+          var cands = [];
+          for (var ni = 0; ni < nums.length; ni++) {
+            var v = parseFloat(nums[ni].replace(/,/g,""));
+            if (v > 500) cands.push(v);
+          }
+          if (cands.length > 0) { valF = Math.max.apply(null, cands); break; }
         }
       }
+      if (!valF || valF <= 0) continue;
+      funds.push({ name: cleanF, plan: planF, value: valF });
     }
-    var clean = schemeName;
-    var seps = [" - Regular Plan"," - Direct Plan"," - Regular"," - Direct","-Regular","-Direct"," Regular Plan"," Direct Plan"];
-    for (var si = 0; si < seps.length; si++) {
-      var idx = clean.toLowerCase().indexOf(seps[si].toLowerCase());
-      if (idx > 0) { clean = clean.substring(0, idx); break; }
-    }
-    clean = clean.replace(/[-\s]+$/, "").trim();
-    if (clean.length < 5) continue;
-    // Find value
-    var value = null;
-    for (var i = 0; i < lines.length; i++) {
-      var low = lines[i].toLowerCase();
-      if (low.indexOf("market value") >= 0 || (low.indexOf("value") >= 0 && low.indexOf("rs") >= 0)) {
-        var nums = lines[i].match(/[\d,]+\.?\d*/g) || [];
-        var candidates = [];
-        for (var ni = 0; ni < nums.length; ni++) {
-          var v = parseFloat(nums[ni].replace(/,/g,""));
-          if (v > 500) candidates.push(v);
-        }
-        if (candidates.length > 0) { value = Math.max.apply(null, candidates); break; }
-      }
-    }
-    if (!value) {
-      var rsIdx = 0;
-      while (true) {
-        var ri = block.toLowerCase().indexOf("rs", rsIdx);
-        if (ri < 0) break;
-        var snippet = block.substring(ri+2, ri+20).trim().replace(/^\./, "");
-        var m = snippet.match(/^[\d,]+\.?\d*/);
-        if (m) {
-          var v = parseFloat(m[0].replace(/,/g,""));
-          if (v > 500 && (!value || v > value)) value = v;
-        }
-        rsIdx = ri + 2;
-      }
-    }
-    if (!value || value <= 0) continue;
-    funds.push({ name: clean, plan: plan, value: value });
   }
   return funds;
 }
