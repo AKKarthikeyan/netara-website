@@ -28,7 +28,7 @@ h1 em{font-style:italic;color:#C99535}
 .ey{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#A8771E;margin-bottom:4px}
 .st{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#0E0D0A;margin-bottom:14px}
 .hint{font-size:13px;color:#5A5650;margin-bottom:14px}
-.drop{border:2px dashed #E0D8C6;padding:32px 16px;text-align:center;cursor:pointer;background:#F8F4EC;position:relative;border-radius:2px}
+.drop{border:2px dashed #E0D8C6;padding:32px 16px;text-align:center;cursor:pointer;background:#F8F4EC;position:relative;border-radius:2px;transition:all .2s}
 .drop:hover{border-color:#A8771E;background:#F2E4BE}
 .drop.done{border-color:#2A6B45;border-style:solid;background:#E8F3ED}
 .drop.done .di,.drop.done .dl{color:#2A6B45}
@@ -45,7 +45,7 @@ h1 em{font-style:italic;color:#C99535}
 .log.show{display:block}
 .ll{color:rgba(255,255,255,.35)}
 .ll.ok{color:#4CAF50}.ll.err{color:#EF5350}.ll.info{color:#C99535}
-.rbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;background:#0E0D0A;color:#F8F4EC;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;margin-top:18px}
+.rbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;background:#0E0D0A;color:#F8F4EC;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;margin-top:18px;transition:background .2s}
 .rbtn:hover:not(:disabled){background:#A8771E;color:#0E0D0A}
 .rbtn:disabled{opacity:.4;cursor:not-allowed}
 .sp{width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#C99535;border-radius:50%;animation:spin .8s linear infinite;display:none}
@@ -54,22 +54,23 @@ h1 em{font-style:italic;color:#C99535}
 #res{display:none}
 #res.show{display:block}
 .sbar{background:#0E0D0A;padding:28px;display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;margin-bottom:18px}
-.sn{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:600;color:#FEFEFC;line-height:1}
-.sn small{font-size:24px;color:#C99535}
+.snum{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:600;color:#FEFEFC;line-height:1}
+.snum small{font-size:24px;color:#C99535}
 .si .sl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#A8771E;margin-bottom:4px}
 .si .sh{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#FEFEFC;margin-bottom:2px}
 .si .ss{font-size:12px;color:rgba(255,255,255,.35)}
 .stl{text-align:right}
 .stl .sl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:2px}
-.stl .sn2{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:#8B3A2A;line-height:1}
+.stl .sn{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:#8B3A2A;line-height:1}
 .stl .ss{font-size:10px;color:rgba(255,255,255,.25)}
 .pg{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:20px}
 .pb{background:#FEFEFC;border:1px solid rgba(14,13,10,.1);border-top:3px solid #8B3A2A;padding:14px 16px}
 .py{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#96948E;margin-bottom:4px}
 .pv{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:#8B3A2A;line-height:1;margin-bottom:2px}
 .psb{font-size:10px;color:#96948E}
-.rs{margin-bottom:22px}
-.ey2{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#A8771E;margin-bottom:4px;margin-top:18px}
+.rs{margin-bottom:22px;margin-top:20px}
+.ey2{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#A8771E;margin-bottom:6px}
+.st2{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#0E0D0A;margin-bottom:10px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#FEFEFC;background:#2C2A24;padding:8px 12px;text-align:left}
 th.r{text-align:right}
@@ -95,11 +96,11 @@ tr:nth-child(even) td{background:#EDE8DB}
   <a href="/" class="back">&#8592; netara.in</a>
 </nav>
 <div class="hero">
-  <h1>Upload your CAMS PDF.<br><em>Results in 2 seconds.</em></h1>
-  <p>PDF decrypted in your browser. Only the extracted text is sent to the audit engine &mdash; your password never leaves your device.</p>
-  <div class="badge"><div class="bdot"></div><span>PDF decrypted locally</span></div>
+  <h1>Upload your CAMS PDF.<br><em>Audit runs in your browser.</em></h1>
+  <p>PDF decrypted locally. All analysis runs in your browser &mdash; nothing is sent to any server.</p>
+  <div class="badge"><div class="bdot"></div><span>100% local</span></div>
   <div class="badge"><div class="bdot"></div><span>Password never sent</span></div>
-  <div class="badge"><div class="bdot"></div><span>Results in &lt;2s</span></div>
+  <div class="badge"><div class="bdot"></div><span>Instant results</span></div>
 </div>
 <div class="main">
   <div class="card" id="c1">
@@ -157,8 +158,8 @@ tr:nth-child(even) td{background:#EDE8DB}
 </footer>
 <script>
 (function() {
-var pdfData = null;
-var sampleMode = false;
+"use strict";
+var pdfData = null, sampleMode = false;
 var iCount = 0, gCount = 0, eCount = 0;
 
 function log(msg, type) {
@@ -190,6 +191,134 @@ function cmpd(a, y) {
   return fv;
 }
 
+// ── CAMS PDF Parser (pure JS) ─────────────────────────
+function parseCams(text) {
+  var funds = [];
+  var parts = text.split("Folio N");
+  if (parts.length < 2) return funds;
+  for (var pi = 1; pi < parts.length; pi++) {
+    var block = "Folio N" + parts[pi];
+    var lines = [];
+    var rawLines = block.split("
+");
+    for (var li = 0; li < rawLines.length; li++) {
+      var l = rawLines[li].trim();
+      if (l) lines.push(l);
+    }
+    var schemeName = null, plan = null;
+    var skipWords = ["folio","pan:","kyc:","registrar","advisor","opening","closing","date","transaction","systematic","purchase","redemption","switch"];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var low = line.toLowerCase();
+      var skip = false;
+      for (var si = 0; si < skipWords.length; si++) {
+        if (low.indexOf(skipWords[si]) === 0) { skip = true; break; }
+      }
+      if (skip || (line.length > 0 && line[0] >= "0" && line[0] <= "9") || line.length < 8) continue;
+      if (low.indexOf("fund") < 0 && low.indexOf("scheme") < 0) continue;
+      if (low.indexOf("regular") >= 0) { schemeName = line; plan = "Regular"; break; }
+      if (low.indexOf("direct") >= 0) { schemeName = line; plan = "Direct"; break; }
+      if (line.indexOf(" - ") >= 0 && low.indexOf("fund") >= 0) { schemeName = line; plan = "Regular"; break; }
+    }
+    if (!schemeName) continue;
+    if (plan === "Regular") {
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].toLowerCase().indexOf("advisor") >= 0 && lines[i].toUpperCase().indexOf("DIRECT") >= 0) {
+          plan = "Direct"; break;
+        }
+      }
+    }
+    var clean = schemeName;
+    var seps = [" - Regular Plan"," - Direct Plan"," - Regular"," - Direct","-Regular","-Direct"," Regular Plan"," Direct Plan"];
+    for (var si = 0; si < seps.length; si++) {
+      var idx = clean.toLowerCase().indexOf(seps[si].toLowerCase());
+      if (idx > 0) { clean = clean.substring(0, idx); break; }
+    }
+    clean = clean.replace(/[-\s]+$/, "").trim();
+    if (clean.length < 5) continue;
+    // Find value
+    var value = null;
+    for (var i = 0; i < lines.length; i++) {
+      var low = lines[i].toLowerCase();
+      if (low.indexOf("market value") >= 0 || (low.indexOf("value") >= 0 && low.indexOf("rs") >= 0)) {
+        var nums = lines[i].match(/[\d,]+\.?\d*/g) || [];
+        var candidates = [];
+        for (var ni = 0; ni < nums.length; ni++) {
+          var v = parseFloat(nums[ni].replace(/,/g,""));
+          if (v > 500) candidates.push(v);
+        }
+        if (candidates.length > 0) { value = Math.max.apply(null, candidates); break; }
+      }
+    }
+    if (!value) {
+      var rsIdx = 0;
+      while (true) {
+        var ri = block.toLowerCase().indexOf("rs", rsIdx);
+        if (ri < 0) break;
+        var snippet = block.substring(ri+2, ri+20).trim().replace(/^\./, "");
+        var m = snippet.match(/^[\d,]+\.?\d*/);
+        if (m) {
+          var v = parseFloat(m[0].replace(/,/g,""));
+          if (v > 500 && (!value || v > value)) value = v;
+        }
+        rsIdx = ri + 2;
+      }
+    }
+    if (!value || value <= 0) continue;
+    funds.push({ name: clean, plan: plan, value: value });
+  }
+  return funds;
+}
+
+// ── Audit Logic (pure JS) ─────────────────────────────
+function fvLeakage(leak, years) {
+  var fv = 0;
+  for (var i = 0; i < years; i++) fv += leak * Math.pow(1.12, years-1-i);
+  return fv;
+}
+
+function runAnalysis(funds, insurance, gold, equity) {
+  var regular = funds.filter(function(f){ return f.plan === "Regular" || f.Scheme_Plan === "Regular"; });
+  var leakage = regular.map(function(f) {
+    var val = f.value || f.Current_Value || 0;
+    var name = f.name || f.Scheme_Name || "";
+    var leak = val * 0.01;
+    return { scheme_name: name, current_value: val, annual_leakage: leak, leakage_5yr_compounded: fvLeakage(leak,5), leakage_10yr_compounded: fvLeakage(leak,10) };
+  });
+  var insAudit = (insurance||[]).map(function(p) {
+    var total = (p.premiums||[]).reduce(function(a,b){return a+b},0);
+    var irr = (total > 0 && p.years > 0) ? (Math.pow(p.maturity_value/total, 1/p.years)-1)*100 : 0;
+    return { policy_name: p.name||"Policy", irr: Math.round(irr*100)/100, opportunity_cost: p.maturity_value*(0.12-irr/100) };
+  });
+  var goldAudit = (gold||[]).map(function(g) {
+    var cost = (g.current_value||0)*0.03;
+    return { type: g.type||"Gold", current_value: g.current_value||0, annual_leakage: cost, leakage_10yr_compounded: fvLeakage(cost,10) };
+  });
+  var eqAudit = (equity||[]).map(function(e) {
+    var leak = (e.brokerage||0)+(e.stt||0)+(e.idle_cash||0)*0.12;
+    return { type: e.type||"Equity", annual_leakage: leak, leakage_10yr_compounded: fvLeakage(leak,10) };
+  });
+  var mf = leakage.reduce(function(s,x){return s+x.annual_leakage},0);
+  var gl = goldAudit.reduce(function(s,x){return s+x.annual_leakage},0);
+  var eq = eqAudit.reduce(function(s,x){return s+x.annual_leakage},0);
+  var totalAum = funds.reduce(function(s,f){return s+(f.value||f.Current_Value||0)},0);
+  return {
+    regular_vs_direct_leakage: leakage,
+    total_annual_leakage: mf+gl+eq,
+    leakage_breakdown: { mutual_funds: mf, gold: gl, equity: eq },
+    insurance_audit: insAudit,
+    gold_audit: goldAudit,
+    equity_audit: eqAudit,
+    portfolio_summary: {
+      total_funds: funds.length, regular_funds: regular.length,
+      direct_funds: funds.length-regular.length, total_aum: totalAum,
+      regular_aum: regular.reduce(function(s,f){return s+(f.value||f.Current_Value||0)},0),
+      direct_aum: funds.filter(function(f){return f.plan==="Direct"||f.Scheme_Plan==="Direct"}).reduce(function(s,f){return s+(f.value||f.Current_Value||0)},0)
+    }
+  };
+}
+
+// ── Form helpers ──────────────────────────────────────
 function makeInput(labelTxt, id, type, ph) {
   var row = document.createElement("div");
   row.style.cssText = "display:flex;align-items:center;gap:8px;margin-top:5px";
@@ -206,15 +335,13 @@ function makeInput(labelTxt, id, type, ph) {
 function addInsRow() {
   var n = ++iCount;
   var el = document.createElement("div");
-  el.id = "iBlk" + n;
   el.style.cssText = "border:1px solid rgba(14,13,10,.1);padding:10px;margin-bottom:8px;background:#FEFEFC;border-radius:2px";
   var hdr = document.createElement("div");
   hdr.style.cssText = "font-family:'DM Mono',monospace;font-size:9px;color:#A8771E;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px";
   hdr.textContent = "Policy " + n;
   var rm = document.createElement("button");
-  rm.textContent = "x";
-  rm.style.cssText = "float:right;background:none;border:none;color:#96948E;cursor:pointer;font-size:13px";
-  rm.addEventListener("click", function() { el.remove(); });
+  rm.textContent = "x"; rm.style.cssText = "float:right;background:none;border:none;color:#96948E;cursor:pointer;font-size:13px";
+  rm.addEventListener("click", function(){ el.remove(); });
   hdr.appendChild(rm); el.appendChild(hdr);
   el.appendChild(makeInput("Name", "iNm"+n, "text", "LIC Jeevan Anand"));
   el.appendChild(makeInput("Annual premium (Rs.)", "iPr"+n, "number", "50000"));
@@ -226,24 +353,20 @@ function addInsRow() {
 function addGoldRow() {
   var n = ++gCount;
   var el = document.createElement("div");
-  el.id = "gBlk" + n;
   el.style.cssText = "border:1px solid rgba(14,13,10,.1);padding:10px;margin-bottom:8px;background:#FEFEFC;border-radius:2px";
   var hdr = document.createElement("div");
   hdr.style.cssText = "font-family:'DM Mono',monospace;font-size:9px;color:#A8771E;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px";
   hdr.textContent = "Holding " + n;
   var rm = document.createElement("button");
-  rm.textContent = "x";
-  rm.style.cssText = "float:right;background:none;border:none;color:#96948E;cursor:pointer;font-size:13px";
-  rm.addEventListener("click", function() { el.remove(); });
+  rm.textContent = "x"; rm.style.cssText = "float:right;background:none;border:none;color:#96948E;cursor:pointer;font-size:13px";
+  rm.addEventListener("click", function(){ el.remove(); });
   hdr.appendChild(rm); el.appendChild(hdr);
   var tr = document.createElement("div");
   tr.style.cssText = "display:flex;align-items:center;gap:8px;margin-top:5px";
   var tl = document.createElement("label");
-  tl.style.cssText = "font-size:11px;color:#5A5650;min-width:110px";
-  tl.textContent = "Type";
+  tl.style.cssText = "font-size:11px;color:#5A5650;min-width:110px"; tl.textContent = "Type";
   var sel = document.createElement("select");
-  sel.id = "gTp" + n;
-  sel.style.cssText = "flex:1;border:1px solid rgba(14,13,10,.1);background:#FEFEFC;padding:6px 10px;font-size:13px;border-radius:2px";
+  sel.id = "gTp"+n; sel.style.cssText = "flex:1;border:1px solid rgba(14,13,10,.1);background:#FEFEFC;padding:6px 10px;font-size:13px;border-radius:2px";
   ["Physical Jewellery","Physical Coins/Bars","Gold ETF","Sovereign Gold Bond"].forEach(function(o){
     var opt = document.createElement("option"); opt.value = o; opt.textContent = o; sel.appendChild(opt);
   });
@@ -255,15 +378,13 @@ function addGoldRow() {
 function addEquityRow() {
   var n = ++eCount;
   var el = document.createElement("div");
-  el.id = "eBlk" + n;
   el.style.cssText = "border:1px solid rgba(14,13,10,.1);padding:10px;margin-bottom:8px;background:#FEFEFC;border-radius:2px";
   var hdr = document.createElement("div");
   hdr.style.cssText = "font-family:'DM Mono',monospace;font-size:9px;color:#A8771E;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px";
   hdr.textContent = "Equity " + n;
   var rm = document.createElement("button");
-  rm.textContent = "x";
-  rm.style.cssText = "float:right;background:none;border:none;color:#96948E;cursor:pointer;font-size:13px";
-  rm.addEventListener("click", function() { el.remove(); });
+  rm.textContent = "x"; rm.style.cssText = "float:right;background:none;border:none;color:#96948E;cursor:pointer;font-size:13px";
+  rm.addEventListener("click", function(){ el.remove(); });
   hdr.appendChild(rm); el.appendChild(hdr);
   el.appendChild(makeInput("Annual brokerage (Rs.)", "eBr"+n, "number", "4500"));
   el.appendChild(makeInput("Annual STT (Rs.)", "eSt"+n, "number", "2200"));
@@ -278,7 +399,7 @@ function colIns() {
     var pr = parseFloat((document.getElementById("iPr"+i)||{}).value)||0;
     var mt = parseFloat((document.getElementById("iMt"+i)||{}).value)||0;
     var yr = parseInt((document.getElementById("iYr"+i)||{}).value)||0;
-    if (pr && mt && yr) d.push({name: nm.value||"Policy "+i, premiums:[pr], maturity_value:mt, years:yr});
+    if (pr && mt && yr) d.push({name:nm.value||"Policy "+i, premiums:[pr], maturity_value:mt, years:yr});
   }
   return d.length ? d : null;
 }
@@ -305,6 +426,7 @@ function colEq() {
   return d.length ? d : null;
 }
 
+// ── PDF extraction ────────────────────────────────────
 async function extractText(bytes, pwd) {
   if (!window.pdfjsLib) throw new Error("pdf.js not loaded");
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js";
@@ -325,6 +447,7 @@ async function extractText(bytes, pwd) {
   return txt;
 }
 
+// ── Main audit runner ─────────────────────────────────
 async function runAudit() {
   var btn = document.getElementById("runBtn");
   btn.disabled = true; btn.classList.add("loading");
@@ -347,21 +470,19 @@ async function runAudit() {
       log("Decrypting PDF...", "info");
       var txt = await extractText(pdfData, pwd);
       log("Extracted " + txt.length + " chars", "info");
-      log("Parsing CAMS data...", "info");
-      var pr = await fetch("/api/audit", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({mode:"parse_text", text:txt})});
-      if (!pr.ok) throw new Error("Parse error " + pr.status);
-      var pd = await pr.json();
-      funds = pd.funds;
-      log("Found " + funds.length + " funds", "ok");
+      log("Parsing CAMS statement...", "info");
+      funds = parseCams(txt);
+      log("Found " + funds.length + " funds", funds.length > 0 ? "ok" : "err");
+      if (funds.length === 0) {
+        window._rawText = txt;
+        log("Run in console: console.log(window._rawText.substring(0,500))", "info");
+      }
     }
     if (!funds || !funds.length) { log("No funds found. Try sample data.", "err"); return; }
     var reg = funds.filter(function(f){return f.plan==="Regular"||f.Scheme_Plan==="Regular"});
-    log("Regular: " + reg.length + " Direct: " + (funds.length - reg.length), "info");
-    log("Running analysis...", "info");
-    var ar = await fetch("/api/audit", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({mode:"analyze", funds:funds, insurance:colIns(), gold:colGold(), equity:colEq()})});
-    if (!ar.ok) throw new Error("Audit error " + ar.status);
-    var ad = await ar.json();
-    showResults(ad.net_yield_calculator_input);
+    log("Regular: " + reg.length + " Direct: " + (funds.length-reg.length), "info");
+    var result = runAnalysis(funds, colIns(), colGold(), colEq());
+    showResults(result);
     log("Done!", "ok");
   } catch(e) {
     log("Error: " + e.message, "err");
@@ -371,33 +492,70 @@ async function runAudit() {
   }
 }
 
+// ── Render results ────────────────────────────────────
 function showResults(d) {
   var tot = d.total_annual_leakage;
   var ps = d.portfolio_summary || {};
-  var aum = ps.total_aum || tot * 60;
-  var sc = Math.max(1, Math.min(10, 10 - (aum>0?(tot/aum)*100:2)*1.8)).toFixed(1);
+  var aum = ps.total_aum || tot*60;
+  var sc = Math.max(1, Math.min(10, 10-(aum>0?(tot/aum)*100:2)*1.8)).toFixed(1);
   var mt = (d.leakage_breakdown && d.leakage_breakdown.mutual_funds) || 0;
+
+  function fmtS(n) {
+    if (!n||n===0) return "--";
+    if (n>=10000000) return (n/10000000).toFixed(2)+" Cr";
+    if (n>=100000) return (n/100000).toFixed(1)+"L";
+    return Math.round(n).toLocaleString("en-IN");
+  }
+
   var mfR = d.regular_vs_direct_leakage.map(function(f){
-    return "<tr><td class=fn>" + f.scheme_name + "</td><td class=lk>Rs." + (f.annual_leakage>=100000?(f.annual_leakage/100000).toFixed(1)+"L":Math.round(f.annual_leakage).toLocaleString("en-IN")) + "/yr</td><td class=nc>Rs." + (f.leakage_5yr_compounded>=100000?(f.leakage_5yr_compounded/100000).toFixed(1)+"L":Math.round(f.leakage_5yr_compounded).toLocaleString("en-IN")) + "</td><td class=nc>Rs." + (f.leakage_10yr_compounded>=100000?(f.leakage_10yr_compounded/100000).toFixed(1)+"L":Math.round(f.leakage_10yr_compounded).toLocaleString("en-IN")) + "</td></tr>";
+    return "<tr><td class=fn>"+f.scheme_name+"</td><td class=lk>Rs."+fmtS(f.annual_leakage)+"/yr</td><td class=nc>Rs."+fmtS(f.leakage_5yr_compounded)+"</td><td class=nc>Rs."+fmtS(f.leakage_10yr_compounded)+"</td></tr>";
   }).join("");
-  var iR = d.insurance_audit.length ? d.insurance_audit.map(function(p){return "<tr><td class=fn>"+p.policy_name+"</td><td class="+(p.irr<6?"ib":"ig")+">"+p.irr+"% IRR</td><td class=lk>Rs."+(p.opportunity_cost>=100000?(p.opportunity_cost/100000).toFixed(1)+"L":Math.round(p.opportunity_cost).toLocaleString("en-IN"))+"/yr</td></tr>"}).join("") : "<tr><td colspan=3 class=emp>No insurance data</td></tr>";
-  var gR = d.gold_audit.length ? d.gold_audit.map(function(g){return "<tr><td class=fn>"+g.type+"</td><td class=lk>Rs."+(g.annual_leakage>=100000?(g.annual_leakage/100000).toFixed(1)+"L":Math.round(g.annual_leakage).toLocaleString("en-IN"))+"/yr</td><td class=nc>Rs."+(g.leakage_10yr_compounded>=100000?(g.leakage_10yr_compounded/100000).toFixed(1)+"L":Math.round(g.leakage_10yr_compounded).toLocaleString("en-IN"))+"</td></tr>"}).join("") : "<tr><td colspan=3 class=emp>No gold data</td></tr>";
-  var eR = d.equity_audit.length ? d.equity_audit.map(function(e){return "<tr><td class=fn>"+e.type+"</td><td class=lk>Rs."+(e.annual_leakage>=100000?(e.annual_leakage/100000).toFixed(1)+"L":Math.round(e.annual_leakage).toLocaleString("en-IN"))+"/yr</td><td class=nc>Rs."+(e.leakage_10yr_compounded>=100000?(e.leakage_10yr_compounded/100000).toFixed(1)+"L":Math.round(e.leakage_10yr_compounded).toLocaleString("en-IN"))+"</td></tr>"}).join("") : "<tr><td colspan=3 class=emp>No equity data</td></tr>";
+
+  var iR = d.insurance_audit.length ? d.insurance_audit.map(function(p){
+    return "<tr><td class=fn>"+p.policy_name+"</td><td class="+(p.irr<6?"ib":"ig")+">"+p.irr+"% IRR</td><td class=lk>Rs."+fmtS(p.opportunity_cost)+"/yr</td></tr>";
+  }).join("") : "<tr><td colspan=3 class=emp>No insurance data</td></tr>";
+
+  var gR = d.gold_audit.length ? d.gold_audit.map(function(g){
+    return "<tr><td class=fn>"+g.type+"</td><td class=lk>Rs."+fmtS(g.annual_leakage)+"/yr</td><td class=nc>Rs."+fmtS(g.leakage_10yr_compounded)+"</td></tr>";
+  }).join("") : "<tr><td colspan=3 class=emp>No gold data</td></tr>";
+
+  var eR = d.equity_audit.length ? d.equity_audit.map(function(e){
+    return "<tr><td class=fn>"+e.type+"</td><td class=lk>Rs."+fmtS(e.annual_leakage)+"/yr</td><td class=nc>Rs."+fmtS(e.leakage_10yr_compounded)+"</td></tr>";
+  }).join("") : "<tr><td colspan=3 class=emp>No equity data</td></tr>";
+
   var el = document.getElementById("res");
-  el.innerHTML = "<div class=sbar><div><div class=sn>"+sc+"<small>/ 10</small></div></div><div class=si><div class=sl>Netara Score</div><div class=sh>Total Net Yield Report</div><div class=ss>"+(ps.total_funds||d.regular_vs_direct_leakage.length)+" funds &middot; "+(ps.regular_funds||0)+" regular &middot; "+d.insurance_audit.length+" insurance</div></div><div class=stl><div class=sl>Annual drag</div><div class=sn2>"+fmtR(tot)+"</div><div class=ss>recoverable/yr</div></div></div>"
-  + "<div class=pg><div class=pb><div class=py>5-year cost</div><div class=pv>"+fmtR(cmpd(tot,5))+"</div><div class=psb>at 12% CAGR</div></div><div class=pb><div class=py>10-year cost</div><div class=pv>"+fmtR(cmpd(tot,10))+"</div><div class=psb>at 12% CAGR</div></div><div class=pb><div class=py>20-year cost</div><div class=pv>"+fmtR(cmpd(tot,20))+"</div><div class=psb>at 12% CAGR</div></div></div>"
-  + "<div class=rs><div class=ey2>Mutual Fund Audit</div><table><thead><tr><th>Fund (Regular)</th><th class=r>Annual Leakage</th><th class=r>5-Yr Drag</th><th class=r>10-Yr Drag</th></tr></thead><tbody>"+mfR+"<tr class=tr2><td><strong>Total</strong></td><td class=lk><strong>"+fmtR(mt)+"/yr</strong></td><td class=nc><strong>"+fmtR(cmpd(mt,5))+"</strong></td><td class=nc><strong>"+fmtR(cmpd(mt,10))+"</strong></td></tr></tbody></table></div>"
-  + "<div class=rs><div class=ey2>Insurance Audit</div><table><thead><tr><th>Policy</th><th class=r>IRR</th><th class=r>Annual Opportunity Cost</th></tr></thead><tbody>"+iR+"</tbody></table></div>"
-  + "<div class=rs><div class=ey2>Gold Audit</div><table><thead><tr><th>Type</th><th class=r>Annual Leakage</th><th class=r>10-Yr Drag</th></tr></thead><tbody>"+gR+"</tbody></table></div>"
-  + "<div class=rs><div class=ey2>Equity Audit</div><table><thead><tr><th>Type</th><th class=r>Annual Leakage</th><th class=r>10-Yr Drag</th></tr></thead><tbody>"+eR+"</tbody></table></div>"
-  + "<div class=cta><div><div class=ch>Get your full report with action plan.</div><div class=cs>Free. No product recommendations.</div></div><button class=cb id=ctaBtn>Get Full Report</button></div>";
-  document.getElementById("ctaBtn").addEventListener("click", function(){ window.open("https://netara.beehiiv.com/subscribe?utm_source=audit","_blank"); });
+  el.innerHTML =
+    "<div class=sbar><div><div class=snum>"+sc+"<small>/ 10</small></div></div>"
+    +"<div class=si><div class=sl>Netara Score</div><div class=sh>Total Net Yield Report</div>"
+    +"<div class=ss>"+(ps.total_funds||d.regular_vs_direct_leakage.length)+" funds &middot; "+(ps.regular_funds||0)+" regular &middot; "+d.insurance_audit.length+" insurance</div></div>"
+    +"<div class=stl><div class=sl>Annual drag</div><div class=sn>"+fmtR(tot)+"</div><div class=ss>recoverable/yr</div></div></div>"
+    +"<div class=pg>"
+    +"<div class=pb><div class=py>5-year cost</div><div class=pv>"+fmtR(cmpd(tot,5))+"</div><div class=psb>at 12% CAGR</div></div>"
+    +"<div class=pb><div class=py>10-year cost</div><div class=pv>"+fmtR(cmpd(tot,10))+"</div><div class=psb>at 12% CAGR</div></div>"
+    +"<div class=pb><div class=py>20-year cost</div><div class=pv>"+fmtR(cmpd(tot,20))+"</div><div class=psb>at 12% CAGR</div></div></div>"
+    +"<div class=rs><div class=ey2>Mutual Fund Audit</div><div class=st2>Regular Plan Commission Drag</div>"
+    +"<table><thead><tr><th>Fund (Regular)</th><th class=r>Annual Leakage</th><th class=r>5-Yr Drag</th><th class=r>10-Yr Drag</th></tr></thead>"
+    +"<tbody>"+mfR+"<tr class=tr2><td><strong>Total</strong></td><td class=lk><strong>Rs."+fmtS(mt)+"/yr</strong></td>"
+    +"<td class=nc><strong>Rs."+fmtS(cmpd(mt,5))+"</strong></td><td class=nc><strong>Rs."+fmtS(cmpd(mt,10))+"</strong></td></tr></tbody></table>"
+    +"<p style='font-size:11px;color:#96948E;margin-top:7px;font-style:italic'>Leakage at 1% trail commission. Switching to direct plans eliminates this entirely.</p></div>"
+    +"<div class=rs><div class=ey2>Insurance Audit</div><div class=st2>Policy IRR &amp; Opportunity Cost</div>"
+    +"<table><thead><tr><th>Policy</th><th class=r>IRR</th><th class=r>Annual Opportunity Cost</th></tr></thead><tbody>"+iR+"</tbody></table></div>"
+    +"<div class=rs><div class=ey2>Gold Audit</div><div class=st2>Physical Gold vs SGB</div>"
+    +"<table><thead><tr><th>Type</th><th class=r>Annual Leakage</th><th class=r>10-Yr Drag</th></tr></thead><tbody>"+gR+"</tbody></table></div>"
+    +"<div class=rs><div class=ey2>Equity Audit</div><div class=st2>Brokerage, STT &amp; Idle Cash</div>"
+    +"<table><thead><tr><th>Type</th><th class=r>Annual Leakage</th><th class=r>10-Yr Drag</th></tr></thead><tbody>"+eR+"</tbody></table></div>"
+    +"<div class=cta><div><div class=ch>Get your full report with action plan.</div><div class=cs>Free. No product recommendations.</div></div>"
+    +"<button class=cb id=ctaBtn>Get Full Report</button></div>";
+
+  document.getElementById("ctaBtn").addEventListener("click", function(){
+    window.open("https://netara.beehiiv.com/subscribe?utm_source=audit","_blank");
+  });
   el.classList.add("show");
   el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
+// ── Wire up events ────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
-  // File drop zone click
   document.getElementById("dz").addEventListener("click", function() {
     var fi = document.createElement("input");
     fi.type = "file"; fi.accept = ".pdf";
@@ -416,13 +574,12 @@ document.addEventListener("DOMContentLoaded", function() {
     fi.click();
   });
 
-  // Drag and drop
   var dz = document.getElementById("dz");
   dz.addEventListener("dragover", function(e){ e.preventDefault(); });
   dz.addEventListener("drop", function(e){
     e.preventDefault();
     var f = e.dataTransfer.files[0];
-    if (f && f.name.toLowerCase().endsWith(".pdf")) {
+    if (f && f.name.toLowerCase().indexOf(".pdf") >= 0) {
       var r = new FileReader();
       r.onload = function(ev) {
         pdfData = new Uint8Array(ev.target.result);
@@ -436,8 +593,7 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   document.getElementById("smpBtn").addEventListener("click", function() {
-    sampleMode = true;
-    pdfData = new Uint8Array(1);
+    sampleMode = true; pdfData = new Uint8Array(1);
     document.getElementById("dz").classList.add("done");
     document.getElementById("dzl").textContent = "Sample portfolio loaded (7 funds)";
     document.getElementById("pwd").disabled = true;
@@ -457,7 +613,6 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("eSec").style.display = this.checked ? "block" : "none";
     if (this.checked && eCount === 0) addEquityRow();
   });
-
   document.getElementById("addIBtn").addEventListener("click", addInsRow);
   document.getElementById("addGBtn").addEventListener("click", addGoldRow);
   document.getElementById("addEBtn").addEventListener("click", addEquityRow);
