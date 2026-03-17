@@ -430,8 +430,9 @@ window.runAudit = async function() {
       const txt=await extractText(pdfBytes,pwd);
       log('Text extracted: '+txt.length+' chars','info');
       log('Parsing CAMS statement in Python\u2026','info');
-      console.log('=== RAW PDF TEXT SAMPLE ===');
-      console.log(_txt.substring(0, 4000));
+      window._rawPdfText = _txt;
+      console.log('=== COPY THIS: window._rawPdfText ===');
+      console.log(_txt.substring(0, 5000));
       pyodide.globals.set('_txt',txt);
       const fj=await pyodide.runPythonAsync('import json; json.dumps(parse_cams_pdf_text(_txt))');
       funds=JSON.parse(fj);
