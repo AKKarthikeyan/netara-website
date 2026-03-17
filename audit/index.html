@@ -4,12 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio Efficiency Audit — Netara</title>
-<meta name="description" content="Upload your CAMS PDF and get your Total Net Yield score. Audit runs in under 2 seconds.">
+<meta name="description" content="Upload your CAMS password-protected PDF. Python audit runs entirely in your browser — no server, no data upload.">
 <link rel="canonical" href="https://netara.in/audit">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- pdf.js for in-browser PDF decryption only (~1MB, fast) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
 <style>
 :root{--ink:#0E0D0A;--ink-mid:#2C2A24;--ink-muted:#5A5650;--ink-faint:#96948E;--cream:#F8F4EC;--cream-d:#EDE8DB;--parchment:#E0D8C6;--gold:#A8771E;--gold-l:#C99535;--gold-pale:#F2E4BE;--white:#FEFEFC;--green:#2A6B45;--green-pale:#E8F3ED;--red:#8B3A2A;--red-pale:#F5EDEA;--border:rgba(14,13,10,0.1);--font-d:'Cormorant Garamond',Georgia,serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -22,8 +21,8 @@ nav{background:var(--ink);height:56px;padding:0 40px;display:flex;align-items:ce
 .nav-back:hover{color:var(--gold-l);}
 .hero{background:var(--ink);padding:48px 40px 44px;border-bottom:1px solid rgba(168,119,30,0.3);}
 .hero-inner{max-width:720px;margin:0 auto;}
-.ey{font-family:var(--font-m);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
-.ey::before{content:'';width:18px;height:1px;background:var(--gold);display:inline-block;}
+.eyebrow{font-family:var(--font-m);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.eyebrow::before{content:'';width:18px;height:1px;background:var(--gold);display:inline-block;}
 h1{font-family:var(--font-d);font-size:clamp(28px,4.5vw,48px);font-weight:600;line-height:1.1;color:var(--white);margin-bottom:12px;letter-spacing:-0.01em;}
 h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 .hero-sub{font-size:14px;font-weight:300;color:rgba(255,255,255,0.4);line-height:1.65;max-width:560px;margin-bottom:20px;}
@@ -50,6 +49,16 @@ h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 .pinp{flex:1;border:1px solid var(--border);background:var(--cream);padding:10px 14px;font-family:var(--font-b);font-size:14px;color:var(--ink);border-radius:2px;outline:none;transition:border-color 0.18s;}
 .pinp:focus{border-color:var(--gold);}
 .phint{font-size:11px;color:var(--ink-faint);margin-top:6px;font-style:italic;}
+.pyst{font-family:var(--font-m);font-size:10px;letter-spacing:0.06em;padding:10px 16px;border-radius:2px;display:flex;align-items:center;gap:8px;}
+.pyst.loading{background:var(--gold-pale);color:var(--gold);}
+.pyst.ready{background:var(--green-pale);color:var(--green);}
+.pyst.error{background:var(--red-pale);color:var(--red);}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.pyst.loading .sdot{background:var(--gold);animation:pulse 1.2s ease infinite;}
+.pyst.ready .sdot{background:var(--green);}
+.pyst.error .sdot{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
 .lg{background:var(--ink);padding:14px 18px;border-radius:3px;margin-top:14px;font-family:var(--font-m);font-size:11px;max-height:130px;overflow-y:auto;display:none;line-height:1.8;}
 .lg.show{display:block;}
 .ll{color:rgba(255,255,255,0.35);}
@@ -72,7 +81,6 @@ h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 .rbtn:disabled{opacity:0.45;cursor:not-allowed;}
 .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,0.25);border-top-color:var(--gold-l);border-radius:50%;animation:spin 0.8s linear infinite;display:none;}
 .rbtn.loading .spin{display:block;}
-@keyframes spin{to{transform:rotate(360deg)}}
 #res{display:none;}
 #res.show{display:block;}
 .sbanner{background:var(--ink);padding:32px;margin-bottom:22px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;}
@@ -82,9 +90,9 @@ h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 .sttl{font-family:var(--font-d);font-size:22px;font-weight:600;color:var(--white);margin-bottom:3px;}
 .ssub{font-size:12px;font-weight:300;color:rgba(255,255,255,0.35);}
 .stot{text-align:right;}
-.stot-l{font-family:var(--font-m);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:3px;}
-.stot-n{font-family:var(--font-d);font-size:38px;font-weight:600;color:#8B3A2A;line-height:1;}
-.stot-s{font-size:10px;color:rgba(255,255,255,0.25);margin-top:2px;}
+.stot-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:3px;}
+.stot-num{font-family:var(--font-d);font-size:38px;font-weight:600;color:#8B3A2A;line-height:1;}
+.stot-sub{font-size:10px;color:rgba(255,255,255,0.25);margin-top:2px;}
 .pstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:22px;}
 .pbox{background:var(--white);border:1px solid var(--border);padding:16px 18px;border-top:3px solid #8B3A2A;}
 .pyr{font-family:var(--font-m);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;}
@@ -97,7 +105,7 @@ h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 .rt td{padding:10px 13px;border-bottom:1px solid var(--border);color:var(--ink-mid);vertical-align:middle;}
 .rt tr:nth-child(even) td{background:var(--cream-d);}
 .rt tr:last-child td{border-bottom:none;}
-.fn{font-weight:400;color:var(--ink);}
+.fn{font-weight:400;color:var(--ink);max-width:260px;}
 .nc{font-family:var(--font-m);font-size:12px;text-align:right;}
 .lk{color:#8B3A2A;font-weight:500;}
 .ig{color:#2A6B45;}.ib{color:#8B3A2A;}
@@ -111,6 +119,7 @@ h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 .acta-h{font-family:var(--font-d);font-size:19px;font-weight:600;color:var(--white);}
 .acta-s{font-size:11px;font-weight:300;color:rgba(255,255,255,0.3);margin-top:3px;}
 .acta-btn{background:var(--gold);color:var(--ink);font-family:var(--font-m);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:12px 22px;border-radius:1px;border:none;cursor:pointer;white-space:nowrap;}
+code{font-family:var(--font-m);font-size:11px;background:var(--cream-d);padding:2px 5px;}
 @media(max-width:640px){.main{padding:28px 18px;}.hero{padding:32px 18px;}.ogrid{grid-template-columns:1fr;}.sbanner{grid-template-columns:1fr;gap:14px;}.stot{text-align:left;}.pstrip{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -123,39 +132,44 @@ h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="ey">Portfolio Audit Engine</div>
-    <h1>Upload your CAMS PDF.<br><em>Results in under 2 seconds.</em></h1>
-    <p class="hero-sub">Your PDF is decrypted in your browser. Only the extracted text is sent to our audit engine — never your raw PDF or password.</p>
+    <div class="eyebrow">Zero-Server Audit Engine</div>
+    <h1>Upload your CAMS PDF.<br><em>Password stays in your browser.</em></h1>
+    <p class="hero-sub">Your password-protected CAMS CAS statement is decrypted and parsed entirely in your browser using pdf.js + Python (Pyodide WebAssembly). No data ever reaches a server.</p>
     <div class="badges">
-      <div class="badge"><div class="bdot"></div><span>PDF decrypted locally</span></div>
-      <div class="badge"><div class="bdot"></div><span>Password never transmitted</span></div>
-      <div class="badge"><div class="bdot"></div><span>Results in &lt;2 seconds</span></div>
+      <div class="badge"><div class="bdot"></div><span>pdf.js decrypts locally</span></div>
+      <div class="badge"><div class="bdot"></div><span>Python runs in WASM</span></div>
+      <div class="badge"><div class="bdot"></div><span>Zero server calls</span></div>
     </div>
   </div>
 </div>
 
 <div class="main">
 
+  <div class="pyst loading" id="pyst">
+    <div class="sdot"></div>
+    <span id="pystxt">Loading Python environment… ~8 seconds on first visit</span>
+  </div>
+
   <!-- STEP 1 -->
   <div class="card" id="c1">
     <div class="sey">Step 1 — Required</div>
     <div class="stitle">Upload your CAMS CAS Statement (PDF)</div>
     <p style="font-size:13px;color:var(--ink-muted);margin-bottom:16px;">
-      Get your CAS PDF from <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" style="color:var(--gold);">camsonline.com</a> → Consolidated Account Statement → enter email → set a password → receive PDF by email in ~10 minutes.
+      Get your CAS PDF from <a href="https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement" target="_blank" style="color:var(--gold);">camsonline.com</a> → Consolidated Account Statement → enter your email → set a password → receive PDF by email within 10 minutes.
     </p>
     <div class="uzone" id="dz">
       <input type="file" id="pdfFile" accept=".pdf" onchange="handlePDF(this)">
       <div class="uicon">↑</div>
       <div class="ulabel" id="dzlbl">Drop CAMS PDF here or click to browse</div>
-      <div class="usub">PDF · password-protected · decrypted locally</div>
+      <div class="usub">PDF · password-protected · decrypted locally · never uploaded</div>
     </div>
     <div class="prow">
       <span class="plbl">PDF Password</span>
       <input type="password" class="pinp" id="pdfPwd" placeholder="Password you set on camsonline.com">
     </div>
-    <div class="phint">The password you chose when requesting the CAS — not your login. It never leaves your browser.</div>
+    <div class="phint">This is the password you chose when requesting the CAS — not your login password. It never leaves your browser.</div>
     <div style="margin-top:12px;text-align:right;">
-      <button onclick="loadSample()" style="font-family:var(--font-m);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;background:none;border:1px solid var(--border);color:var(--ink-faint);padding:5px 12px;cursor:pointer;border-radius:2px;">↓ No PDF? Use sample data</button>
+      <button onclick="loadSample()" style="font-family:var(--font-m);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;background:none;border:1px solid var(--border);color:var(--ink-faint);padding:5px 12px;cursor:pointer;border-radius:2px;">↓ No PDF? Use sample data instead</button>
     </div>
   </div>
 
@@ -199,296 +213,394 @@ h1 em{font-style:italic;color:var(--gold-l);font-weight:400;}
 
 <footer style="background:var(--ink);padding:22px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:44px;">
   <div style="font-family:var(--font-d);font-size:16px;font-weight:600;color:var(--white);">Net<span style="color:var(--gold-l);">ara</span></div>
-  <div style="font-family:var(--font-m);font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:0.06em;text-transform:uppercase;">Not investment advice · © 2026 Netara</div>
+  <div style="font-family:var(--font-m);font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:0.06em;text-transform:uppercase;">Not investment advice · Data processed locally · © 2026 Netara</div>
 </footer>
 
 <script>
-let pdfBytes=null; let iC=0,gC=0,eC=0;
+const PY = `
+import json
 
-// ── pdf.js setup ─────────────────────────
-function pdfjsReady() {
-  return typeof window.pdfjsLib !== 'undefined';
-}
+def parse_cams_pdf_text(raw_text):
+    funds = []
+    NL = chr(10)
+    parts = raw_text.split("Folio N")
+    if len(parts) < 2:
+        parts = raw_text.replace("   ", NL).split("Folio N")
+    if len(parts) < 2:
+        return funds
+    for part in parts[1:]:
+        block = "Folio N" + part
+        lines = []
+        for chunk in block.split(NL):
+            chunk = chunk.strip()
+            if chunk:
+                lines.append(chunk)
+        scheme_name = None
+        plan = None
+        for line in lines:
+            low = line.lower()
+            skip = False
+            for sw in ["folio","pan:","kyc:","registrar","advisor","opening","closing","date","transaction","systematic","purchase","redemption","switch"]:
+                if low.startswith(sw):
+                    skip = True
+                    break
+            if skip:
+                continue
+            if line and line[0].isdigit():
+                continue
+            if len(line) < 8:
+                continue
+            if "fund" not in low and "scheme" not in low:
+                continue
+            if "regular" in low:
+                scheme_name = line
+                plan = "Regular"
+                break
+            elif "direct" in low:
+                scheme_name = line
+                plan = "Direct"
+                break
+            elif " - " in line and "fund" in low:
+                scheme_name = line
+                plan = "Regular"
+                break
+        if not scheme_name:
+            continue
+        if plan == "Regular":
+            for line in lines:
+                if "advisor" in line.lower() and "direct" in line.upper():
+                    plan = "Direct"
+                    break
+        clean = scheme_name
+        for sep in [" - Regular Plan", " - Direct Plan", " - Regular", " - Direct", "-Regular Plan", "-Direct Plan", "-Regular", "-Direct", " Regular Plan", " Direct Plan"]:
+            idx = clean.lower().find(sep.lower())
+            if idx > 0:
+                clean = clean[:idx]
+                break
+        clean = clean.strip().strip("-").strip()
+        if len(clean) < 5:
+            continue
+        value = None
+        for line in lines:
+            low = line.lower()
+            if "market value" in low or ("value" in low and "rs" in low):
+                candidates = []
+                i = 0
+                while i < len(line):
+                    if line[i].isdigit():
+                        num = ""
+                        while i < len(line) and (line[i].isdigit() or line[i] == "," or line[i] == "."):
+                            num += line[i]
+                            i += 1
+                        try:
+                            v = float(num.replace(",", ""))
+                            if v > 500:
+                                candidates.append(v)
+                        except:
+                            pass
+                    else:
+                        i += 1
+                if candidates:
+                    value = max(candidates)
+                    break
+        if not value:
+            idx = 0
+            while True:
+                ri = block.lower().find("rs", idx)
+                if ri < 0:
+                    break
+                snippet = block[ri+2:ri+20].strip().lstrip(".")
+                num = ""
+                for ch in snippet:
+                    if ch.isdigit() or (ch == "," and num) or (ch == "." and "." not in num):
+                        num += ch
+                    else:
+                        break
+                if num:
+                    try:
+                        v = float(num.replace(",", ""))
+                        if v > 500:
+                            if not value or v > value:
+                                value = v
+                    except:
+                        pass
+                idx = ri + 2
+        if not value or value <= 0:
+            continue
+        nav = 0.0
+        for line in lines:
+            if "nav" in line.lower():
+                num = ""
+                for ch in line:
+                    if ch.isdigit() or (ch == "." and "." not in num and num):
+                        num += ch
+                    elif num and not (ch.isdigit() or ch == "."):
+                        try:
+                            v = float(num)
+                            if 1 < v < 100000:
+                                nav = v
+                                break
+                        except:
+                            pass
+                        num = ""
+                if nav:
+                    break
+        funds.append({"Scheme_Name": clean, "Scheme_Plan": plan, "Current_Value": value, "Units": 0.0, "Nav": nav})
+    return funds
 
-// ── Unlock UI once PDF is loaded ──────────
-function unlock() {
-  if (pdfBytes) {
-    document.getElementById('c2').classList.remove('locked');
-    document.getElementById('c3').classList.remove('locked');
-    document.getElementById('rBtn').disabled = false;
+def calculate_irr(premiums, maturity_value, years):
+    total = sum(premiums)
+    if total == 0 or years == 0:
+        return 0
+    return ((maturity_value / total) ** (1.0 / years) - 1) * 100
+
+def fv_leakage(annual_leakage, years, rate=0.12):
+    fv = 0
+    for i in range(years):
+        fv += annual_leakage * ((1 + rate) ** (years - 1 - i))
+    return fv
+
+def analyze_portfolio(funds_list, insurance_data=None, gold_data=None, equity_data=None):
+    regular = [f for f in funds_list if f["Scheme_Plan"] == "Regular"]
+    leakage_report = []
+    for f in regular:
+        leak = f["Current_Value"] * 0.01
+        leakage_report.append({"scheme_name": f["Scheme_Name"], "current_value": float(f["Current_Value"]), "annual_leakage": float(leak), "leakage_5yr_compounded": float(fv_leakage(leak, 5)), "leakage_10yr_compounded": float(fv_leakage(leak, 10))})
+    insurance_audit = []
+    if insurance_data:
+        for p in insurance_data:
+            irr = calculate_irr(p["premiums"], p["maturity_value"], p["years"])
+            insurance_audit.append({"policy_name": p["name"], "irr": round(float(irr), 2), "opportunity_cost": float(p["maturity_value"] * (0.12 - irr / 100))})
+    gold_audit = []
+    if gold_data:
+        for g in gold_data:
+            cost = g["current_value"] * 0.03
+            gold_audit.append({"type": g["type"], "current_value": float(g["current_value"]), "annual_leakage": float(cost), "leakage_10yr_compounded": float(fv_leakage(cost, 10))})
+    equity_audit = []
+    if equity_data:
+        for e in equity_data:
+            leak = e.get("brokerage", 0) + e.get("stt", 0) + e.get("idle_cash", 0) * 0.12
+            equity_audit.append({"type": e.get("type", "Equity"), "annual_leakage": float(leak), "leakage_10yr_compounded": float(fv_leakage(leak, 10))})
+    mf_leak = sum(x["annual_leakage"] for x in leakage_report)
+    gold_leak = sum(x["annual_leakage"] for x in gold_audit)
+    eq_leak = sum(x["annual_leakage"] for x in equity_audit)
+    total_aum = sum(f["Current_Value"] for f in funds_list)
+    return json.dumps({"net_yield_calculator_input": {"regular_vs_direct_leakage": leakage_report, "total_annual_leakage": float(mf_leak + gold_leak + eq_leak), "leakage_breakdown": {"mutual_funds": float(mf_leak), "gold": float(gold_leak), "equity": float(eq_leak)}, "insurance_audit": insurance_audit, "gold_audit": gold_audit, "equity_audit": equity_audit, "portfolio_summary": {"total_funds": len(funds_list), "regular_funds": len(regular), "direct_funds": len(funds_list) - len(regular), "total_aum": float(total_aum), "regular_aum": float(sum(f["Current_Value"] for f in regular)), "direct_aum": float(sum(f["Current_Value"] for f in funds_list if f["Scheme_Plan"] == "Direct"))}}})
+`;
+</script>
+
+<script type="module">
+import * as pdfjsLib from 'https://mozilla.github.io/pdf.js/build/pdf.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.mjs';
+window._pdfjs = pdfjsLib;
+window._pdfjsOK = true;
+window.log('pdf.js loaded ✓', 'ok');
+window.chk();
+</script>
+
+<script>
+let pyodide=null, pyOK=false, pdfjsOK=false, pdfBytes=null;
+let iC=0,gC=0,eC=0;
+
+window.log = function(msg, type='log') {
+  const el=document.getElementById('lg');
+  el.classList.add('show');
+  const d=document.createElement('div');
+  d.className='ll '+type;
+  const ts=new Date().toLocaleTimeString('en-IN',{hour12:false});
+  d.textContent=`[${ts}] ${msg}`;
+  el.appendChild(d);
+  el.scrollTop=el.scrollHeight;
+};
+
+window.chk = function() {
+  if(window._pdfjsOK) pdfjsOK=true;
+  if(pdfBytes){document.getElementById('c2').classList.remove('locked');}
+  if(pdfBytes&&pyOK&&pdfjsOK){document.getElementById('c3').classList.remove('locked');document.getElementById('rBtn').disabled=false;}
+  if(pyOK&&pdfjsOK){document.getElementById('pyst').className='pyst ready';document.getElementById('pystxt').textContent='Python ready \u00b7 pdf.js ready \u00b7 upload your CAS PDF to begin';}
+};
+
+async function initPy() {
+  try {
+    log('Loading Pyodide\u2026','info');
+    pyodide=await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/'});
+    await pyodide.loadPackage(['pandas']);
+    await pyodide.runPythonAsync(PY);
+    pyOK=true;
+    log('Pyodide + pandas ready \u2713','ok');
+    chk();
+  } catch(e) {
+    document.getElementById('pyst').className='pyst error';
+    document.getElementById('pystxt').textContent='Python load failed: '+e.message;
+    log('Pyodide error: '+e.message,'err');
   }
 }
 
-// ── Log ──────────────────────────────────
-function log(msg, type='log') {
-  const el = document.getElementById('lg');
-  el.classList.add('show');
-  const d = document.createElement('div');
-  d.className = 'll ' + type;
-  const ts = new Date().toLocaleTimeString('en-IN', {hour12:false});
-  d.textContent = '[' + ts + '] ' + msg;
-  el.appendChild(d);
-  el.scrollTop = el.scrollHeight;
-}
-
-// ── PDF file handling ─────────────────────
-function handlePDF(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const r = new FileReader();
-  r.onload = e => {
-    pdfBytes = new Uint8Array(e.target.result);
+window.handlePDF = function(input) {
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    pdfBytes=new Uint8Array(e.target.result);
     document.getElementById('dz').classList.add('has-file');
-    document.getElementById('dzlbl').textContent = '✓ ' + file.name;
-    log('PDF loaded: ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)', 'ok');
-    unlock();
+    document.getElementById('dzlbl').textContent='\u2713 '+file.name+' loaded';
+    log('PDF loaded: '+file.name+' ('+(file.size/1024).toFixed(0)+' KB)','ok');
+    chk();
   };
   r.readAsArrayBuffer(file);
-}
+};
 
-// Drag-drop
-const dz = document.getElementById('dz');
-['dragover','dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
-['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
-dz.addEventListener('drop', e => {
-  const f = e.dataTransfer.files[0];
-  if (f && f.name.toLowerCase().endsWith('.pdf')) {
-    document.getElementById('pdfFile').files = e.dataTransfer.files;
-    handlePDF(document.getElementById('pdfFile'));
-  }
+const dz=document.getElementById('dz');
+['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag');}));
+dz.addEventListener('drop',e=>{
+  const f=e.dataTransfer.files[0];
+  if(f&&f.name.toLowerCase().endsWith('.pdf')){document.getElementById('pdfFile').files=e.dataTransfer.files;handlePDF(document.getElementById('pdfFile'));}
 });
 
-// ── Sample data ───────────────────────────
-function loadSample() {
-  window._sample = [
-    {name:'HDFC Mid-Cap Opportunities Fund', plan:'Regular', value:850000},
-    {name:'SBI Small Cap Fund',              plan:'Regular', value:620000},
-    {name:'Parag Parikh Flexi Cap Fund',     plan:'Direct',  value:1200000},
-    {name:'Mirae Asset Large Cap Fund',      plan:'Regular', value:430000},
-    {name:'Axis Long Term Equity Fund',      plan:'Regular', value:310000},
-    {name:'Nifty 50 Index Fund',             plan:'Direct',  value:550000},
-    {name:'ICICI Pru Bluechip Fund',         plan:'Regular', value:275000},
+window.loadSample = function() {
+  window._sample=[
+    {Scheme_Name:'HDFC Mid-Cap Opportunities Fund',Scheme_Plan:'Regular',Current_Value:850000,Units:1240.5,Nav:685.2},
+    {Scheme_Name:'SBI Small Cap Fund',Scheme_Plan:'Regular',Current_Value:620000,Units:890.3,Nav:696.4},
+    {Scheme_Name:'Parag Parikh Flexi Cap Fund',Scheme_Plan:'Direct',Current_Value:1200000,Units:3100.0,Nav:387.1},
+    {Scheme_Name:'Mirae Asset Large Cap Fund',Scheme_Plan:'Regular',Current_Value:430000,Units:1560.2,Nav:275.6},
+    {Scheme_Name:'Axis Long Term Equity Fund',Scheme_Plan:'Regular',Current_Value:310000,Units:780.4,Nav:397.2},
+    {Scheme_Name:'Nifty 50 Index Fund',Scheme_Plan:'Direct',Current_Value:550000,Units:8900.0,Nav:61.8},
+    {Scheme_Name:'ICICI Pru Bluechip Fund',Scheme_Plan:'Regular',Current_Value:275000,Units:920.1,Nav:299.0},
   ];
-  pdfBytes = new Uint8Array(1);
+  pdfBytes=new Uint8Array(1);
   document.getElementById('dz').classList.add('has-file');
-  document.getElementById('dzlbl').textContent = '✓ Sample portfolio loaded (7 funds)';
-  document.getElementById('pdfPwd').value = 'SAMPLE';
-  document.getElementById('pdfPwd').disabled = true;
-  log('Sample data: 7 funds, 5 Regular + 2 Direct', 'ok');
-  unlock();
-}
+  document.getElementById('dzlbl').textContent='\u2713 Sample portfolio loaded (7 funds)';
+  document.getElementById('pdfPwd').value='SAMPLE';
+  document.getElementById('pdfPwd').disabled=true;
+  log('Sample data: 7 funds, 5 Regular + 2 Direct','ok');
+  chk();
+};
 
-// ── Optional sections ─────────────────────
-function tog(t) {
-  const ch = document.getElementById(t+'T').checked;
-  document.getElementById(t+'F').classList.toggle('show', ch);
-  if (ch) {
-    if (t==='i' && !document.querySelector('[id^="in-"]')) addI();
-    if (t==='g' && !document.querySelector('[id^="gv-"]')) addG();
-    if (t==='e' && !document.querySelector('[id^="eb-"]')) addE();
-  }
-}
-function addI() {
-  const id=++iC, el=document.createElement('div'); el.id='ins'+id;
+window.tog = function(t) {
+  const ch=document.getElementById(t+'T').checked;
+  document.getElementById(t+'F').classList.toggle('show',ch);
+  if(ch){if(t==='i'&&!document.querySelector('[id^="in-"]'))addI();if(t==='g'&&!document.querySelector('[id^="gv-"]'))addG();if(t==='e'&&!document.querySelector('[id^="eb-"]'))addE();}
+};
+window.addI = function() {
+  const id=++iC; const el=document.createElement('div'); el.id='ins'+id;
   el.style.cssText='border:1px solid var(--border);padding:10px;margin-bottom:8px;background:var(--white);border-radius:2px;';
-  el.innerHTML='<div style="font-family:var(--font-m);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;">Policy '+id+' <button onclick="document.getElementById('ins'+id+'').remove()" style="float:right;background:none;border:none;color:var(--ink-faint);cursor:pointer;">✕</button></div><div class="fr"><label>Name</label><input type="text" id="in-'+id+'" placeholder="LIC Jeevan Anand"></div><div class="fr" style="margin-top:5px"><label>Annual premium (₹)</label><input type="number" id="ip-'+id+'" placeholder="50000"></div><div class="fr" style="margin-top:5px"><label>Maturity value (₹)</label><input type="number" id="im-'+id+'" placeholder="900000"></div><div class="fr" style="margin-top:5px"><label>Term (years)</label><input type="number" id="iy-'+id+'" placeholder="20"></div>';
+  el.innerHTML=`<div style="font-family:var(--font-m);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;">Policy ${id} <button onclick="document.getElementById('ins${id}').remove()" style="float:right;background:none;border:none;color:var(--ink-faint);cursor:pointer;">\u2715</button></div><div class="fr"><label>Name</label><input type="text" id="in-${id}" placeholder="LIC Jeevan Anand"></div><div class="fr" style="margin-top:5px"><label>Annual premium (\u20b9)</label><input type="number" id="ip-${id}" placeholder="50000"></div><div class="fr" style="margin-top:5px"><label>Maturity value (\u20b9)</label><input type="number" id="im-${id}" placeholder="900000"></div><div class="fr" style="margin-top:5px"><label>Term (years)</label><input type="number" id="iy-${id}" placeholder="20"></div>`;
   document.getElementById('iL').appendChild(el);
-}
-function addG() {
-  const id=++gC, el=document.createElement('div'); el.id='gld'+id;
+};
+window.addG = function() {
+  const id=++gC; const el=document.createElement('div'); el.id='gld'+id;
   el.style.cssText='border:1px solid var(--border);padding:10px;margin-bottom:8px;background:var(--white);border-radius:2px;';
-  el.innerHTML='<div style="font-family:var(--font-m);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;">Holding '+id+' <button onclick="document.getElementById('gld'+id+'').remove()" style="float:right;background:none;border:none;color:var(--ink-faint);cursor:pointer;">✕</button></div><div class="fr"><label>Type</label><select id="gt-'+id+'" style="flex:1;border:1px solid var(--border);background:var(--white);padding:7px 10px;font-family:var(--font-b);font-size:13px;border-radius:2px;"><option>Physical Jewellery</option><option>Physical Coins/Bars</option><option>Gold ETF</option><option>Sovereign Gold Bond</option></select></div><div class="fr" style="margin-top:5px"><label>Current value (₹)</label><input type="number" id="gv-'+id+'" placeholder="300000"></div>';
+  el.innerHTML=`<div style="font-family:var(--font-m);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;">Holding ${id} <button onclick="document.getElementById('gld${id}').remove()" style="float:right;background:none;border:none;color:var(--ink-faint);cursor:pointer;">\u2715</button></div><div class="fr"><label>Type</label><select id="gt-${id}" style="flex:1;border:1px solid var(--border);background:var(--white);padding:7px 10px;font-family:var(--font-b);font-size:13px;border-radius:2px;"><option>Physical Jewellery</option><option>Physical Coins/Bars</option><option>Gold ETF</option><option>Sovereign Gold Bond</option></select></div><div class="fr" style="margin-top:5px"><label>Current value (\u20b9)</label><input type="number" id="gv-${id}" placeholder="300000"></div>`;
   document.getElementById('gL').appendChild(el);
-}
-function addE() {
-  const id=++eC, el=document.createElement('div'); el.id='eq'+id;
+};
+window.addE = function() {
+  const id=++eC; const el=document.createElement('div'); el.id='eq'+id;
   el.style.cssText='border:1px solid var(--border);padding:10px;margin-bottom:8px;background:var(--white);border-radius:2px;';
-  el.innerHTML='<div style="font-family:var(--font-m);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;">Equity '+id+' <button onclick="document.getElementById('eq'+id+'').remove()" style="float:right;background:none;border:none;color:var(--ink-faint);cursor:pointer;">✕</button></div><div class="fr"><label>Annual brokerage (₹)</label><input type="number" id="eb-'+id+'" placeholder="4500"></div><div class="fr" style="margin-top:5px"><label>Annual STT (₹)</label><input type="number" id="es-'+id+'" placeholder="2200"></div><div class="fr" style="margin-top:5px"><label>Idle cash in demat (₹)</label><input type="number" id="ei-'+id+'" placeholder="80000"></div>';
+  el.innerHTML=`<div style="font-family:var(--font-m);font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;">Equity ${id} <button onclick="document.getElementById('eq${id}').remove()" style="float:right;background:none;border:none;color:var(--ink-faint);cursor:pointer;">\u2715</button></div><div class="fr"><label>Annual brokerage (\u20b9)</label><input type="number" id="eb-${id}" placeholder="4500"></div><div class="fr" style="margin-top:5px"><label>Annual STT (\u20b9)</label><input type="number" id="es-${id}" placeholder="2200"></div><div class="fr" style="margin-top:5px"><label>Idle cash in demat (\u20b9)</label><input type="number" id="ei-${id}" placeholder="80000"></div>`;
   document.getElementById('eL').appendChild(el);
-}
+};
 
-function colI() {
-  const d=[];
-  document.querySelectorAll('[id^="in-"]').forEach(el=>{
-    const id=el.id.split('-').pop();
-    const p=parseFloat(document.getElementById('ip-'+id)?.value)||0;
-    const m=parseFloat(document.getElementById('im-'+id)?.value)||0;
-    const y=parseInt(document.getElementById('iy-'+id)?.value)||0;
-    if(p&&m&&y) d.push({name:el.value||'Policy '+id,premiums:[p],maturity_value:m,years:y});
-  });
-  return d.length?d:null;
-}
-function colG() {
-  const d=[];
-  document.querySelectorAll('[id^="gv-"]').forEach(el=>{
-    const id=el.id.split('-').pop();
-    const v=parseFloat(el.value)||0;
-    if(v) d.push({type:document.getElementById('gt-'+id)?.value||'Physical Jewellery',current_value:v});
-  });
-  return d.length?d:null;
-}
-function colE() {
-  const d=[];
-  document.querySelectorAll('[id^="eb-"]').forEach(el=>{
-    const id=el.id.split('-').pop();
-    const b=parseFloat(el.value)||0,s=parseFloat(document.getElementById('es-'+id)?.value)||0,i=parseFloat(document.getElementById('ei-'+id)?.value)||0;
-    if(b||s||i) d.push({type:'Direct Equity',brokerage:b,stt:s,idle_cash:i});
-  });
-  return d.length?d:null;
-}
+function colI(){const d=[];document.querySelectorAll('[id^="in-"]').forEach(el=>{const id=el.id.split('-').pop();const p=parseFloat(document.getElementById('ip-'+id)?.value)||0;const m=parseFloat(document.getElementById('im-'+id)?.value)||0;const y=parseInt(document.getElementById('iy-'+id)?.value)||0;if(p&&m&&y)d.push({name:el.value||'Policy '+id,premiums:[p],maturity_value:m,years:y});});return d.length?d:null;}
+function colG(){const d=[];document.querySelectorAll('[id^="gv-"]').forEach(el=>{const id=el.id.split('-').pop();const v=parseFloat(el.value)||0;if(v)d.push({type:document.getElementById('gt-'+id)?.value||'Physical Jewellery',current_value:v});});return d.length?d:null;}
+function colE(){const d=[];document.querySelectorAll('[id^="eb-"]').forEach(el=>{const id=el.id.split('-').pop();const b=parseFloat(el.value)||0,s=parseFloat(document.getElementById('es-'+id)?.value)||0,i=parseFloat(document.getElementById('ei-'+id)?.value)||0;if(b||s||i)d.push({type:'Direct Equity',brokerage:b,stt:s,idle_cash:i});});return d.length?d:null;}
 
-// ── Extract text from PDF using pdf.js ────
 async function extractText(bytes, pwd) {
-  if (!pdfjsReady()) throw new Error('pdf.js not loaded yet. Please wait a moment and try again.');
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
-  const task = window.pdfjsLib.getDocument({data: bytes, password: pwd || ''});
+  const task=window._pdfjs.getDocument({data:bytes.slice(),password:pwd||''});
   let pdf;
-  try { pdf = await task.promise; }
-  catch(e) {
-    if (e.name === 'PasswordException' || (e.message && e.message.includes('password')))
-      throw new Error('Incorrect password. Check the password you set on camsonline.com.');
-    throw e;
-  }
-  log('PDF decrypted ✓ — ' + pdf.numPages + ' pages', 'ok');
-  let text = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const pg = await pdf.getPage(i);
-    const tc = await pg.getTextContent();
-    text += '\n' + tc.items.map(x => x.str).join(' ');
-  }
+  try{pdf=await task.promise;}
+  catch(e){if(e.name==='PasswordException'||e.message.includes('password'))throw new Error('Incorrect password. Check the password you set on camsonline.com.');throw e;}
+  log('PDF decrypted \u2713 \u2014 '+pdf.numPages+' pages','ok');
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();text+='\n'+tc.items.map(x=>x.str).join(' ');}
   return text;
 }
 
-// ── MAIN AUDIT RUNNER ─────────────────────
-async function runAudit() {
-  const btn = document.getElementById('rBtn');
-  btn.disabled = true;
-  btn.classList.add('loading');
-
-  try {
+window.runAudit = async function() {
+  const btn=document.getElementById('rBtn');
+  btn.disabled=true;btn.classList.add('loading');
+  try{
     let funds;
-
-    if (window._sample) {
-      log('Using sample portfolio data…', 'info');
-      funds = window._sample;
-    } else {
-      // Step 1: decrypt + extract text in browser
-      const pwd = document.getElementById('pdfPwd').value;
-      log('Decrypting PDF…', 'info');
-      const text = await extractText(pdfBytes, pwd);
-      log('Text extracted: ' + text.length + ' chars', 'info');
-
-      // Step 2: parse text via serverless function
-      log('Parsing CAMS statement…', 'info');
-      const parseRes = await fetch('/api/audit', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({mode: 'parse_text', text})
-      });
-      if (!parseRes.ok) throw new Error('Parse API error: ' + parseRes.status);
-      const parsed = await parseRes.json();
-      funds = parsed.funds;
-      log('Parsed ' + funds.length + ' funds', 'ok');
+    if(window._sample){
+      log('Using sample portfolio data\u2026','info');
+      funds=window._sample;
+    }else{
+      const pwd=document.getElementById('pdfPwd').value;
+      log('Decrypting PDF with pdf.js\u2026','info');
+      const txt=await extractText(pdfBytes,pwd);
+      log('Text extracted: '+txt.length+' chars','info');
+      log('Parsing CAMS statement in Python\u2026','info');
+      window._rawPdfText = _txt;
+      pyodide.globals.set('_txt',txt);
+      const fj=await pyodide.runPythonAsync('import json; json.dumps(parse_cams_pdf_text(_txt))');
+      funds=JSON.parse(fj);
+      log('Parsed '+funds.length+' funds from CAS','ok');
     }
-
-    if (!funds || !funds.length) {
-      log('No funds found. Check password or use sample data.', 'err');
-      return;
-    }
-
-    const reg = funds.filter(f => f.plan === 'Regular');
-    const dir = funds.filter(f => f.plan === 'Direct');
-    log('Regular: ' + reg.length + ' · Direct: ' + dir.length, 'info');
-
-    // Step 3: run full audit via serverless function
-    log('Running portfolio analysis…', 'info');
-    const auditRes = await fetch('/api/audit', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        mode: 'analyze',
-        funds,
-        insurance: colI(),
-        gold: colG(),
-        equity: colE()
-      })
-    });
-    if (!auditRes.ok) throw new Error('Audit API error: ' + auditRes.status);
-    const result = await auditRes.json();
-
-    log('Analysis complete ✓', 'ok');
-    log('Annual leakage: ' + fmt(result.net_yield_calculator_input.total_annual_leakage), 'ok');
+    if(!funds||!funds.length){log('No funds found. Check password or use sample data.','err');return;}
+    const reg=funds.filter(f=>f.Scheme_Plan==='Regular');
+    const dir=funds.filter(f=>f.Scheme_Plan==='Direct');
+    log('Regular: '+reg.length+' \u00b7 Direct: '+dir.length,'info');
+    const iD=colI(),gD=colG(),eD=colE();
+    pyodide.globals.set('_f',pyodide.toPy(funds));
+    pyodide.globals.set('_i',iD?pyodide.toPy(iD):pyodide.globals.get('None'));
+    pyodide.globals.set('_g',gD?pyodide.toPy(gD):pyodide.globals.get('None'));
+    pyodide.globals.set('_e',eD?pyodide.toPy(eD):pyodide.globals.get('None'));
+    log('Running analyze_portfolio()\u2026','info');
+    const rj=await pyodide.runPythonAsync('analyze_portfolio([dict(x) for x in _f],_i,_g,_e)');
+    const result=JSON.parse(rj);
+    log('Analysis complete \u2713','ok');
+    log('Annual leakage: '+fmt(result.net_yield_calculator_input.total_annual_leakage),'ok');
     render(result.net_yield_calculator_input);
+  }catch(e){log('Error: '+e.message,'err');console.error(e);}
+  finally{btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.btxt').textContent='Re-run Audit';}
+};
 
-  } catch(e) {
-    log('Error: ' + e.message, 'err');
-    console.error(e);
-  } finally {
-    btn.disabled = false;
-    btn.classList.remove('loading');
-    btn.querySelector('.btxt').textContent = 'Re-run Audit';
-  }
-}
-
-// ── Helpers ───────────────────────────────
-function fmt(n){if(!n)return'₹0';if(n>=10000000)return'₹'+(n/10000000).toFixed(2)+' Cr';if(n>=100000)return'₹'+(n/100000).toFixed(1)+'L';return'₹'+Math.round(n).toLocaleString('en-IN');}
-function fmts(n){if(!n||n===0)return'—';if(n>=10000000)return(n/10000000).toFixed(2)+' Cr';if(n>=100000)return(n/100000).toFixed(1)+'L';return Math.round(n).toLocaleString('en-IN');}
+function fmt(n){if(!n)return'\u20b90';if(n>=10000000)return'\u20b9'+(n/10000000).toFixed(2)+' Cr';if(n>=100000)return'\u20b9'+(n/100000).toFixed(1)+'L';return'\u20b9'+Math.round(n).toLocaleString('en-IN');}
+function fmts(n){if(!n||n===0)return'\u2014';if(n>=10000000)return(n/10000000).toFixed(2)+' Cr';if(n>=100000)return(n/100000).toFixed(1)+'L';return Math.round(n).toLocaleString('en-IN');}
 function cmpd(a,y){let fv=0;for(let i=0;i<y;i++)fv+=a*Math.pow(1.12,y-1-i);return fv;}
 
-// ── Render results ────────────────────────
-function render(d) {
-  const el = document.getElementById('res');
-  const tot = d.total_annual_leakage;
-  const ps = d.portfolio_summary || {};
-  const ep = ps.total_aum || tot*60;
-  const dp = ep > 0 ? (tot/ep)*100 : 2;
-  const sc = Math.max(1, Math.min(10, 10-dp*1.8)).toFixed(1);
-  const mt = d.leakage_breakdown?.mutual_funds || 0;
+function render(d){
+  const el=document.getElementById('res');
+  const tot=d.total_annual_leakage, ps=d.portfolio_summary||{};
+  const ep=ps.total_aum||tot*60;
+  const dp=(ep>0?(tot/ep)*100:2);
+  const sc=Math.max(1,Math.min(10,10-dp*1.8)).toFixed(1);
+  const mt=d.leakage_breakdown?.mutual_funds||0;
+  const mfR=d.regular_vs_direct_leakage.map(f=>`<tr><td class="fn">${f.scheme_name}</td><td class="nc lk">\u20b9${fmts(f.annual_leakage)}/yr<div class="mb"><div class="mbf" style="width:${Math.min(100,(f.annual_leakage/Math.max(mt,1))*100).toFixed(0)}%"></div></div></td><td class="nc">\u20b9${fmts(f.leakage_5yr_compounded)}</td><td class="nc">\u20b9${fmts(f.leakage_10yr_compounded)}</td></tr>`).join('');
+  const iR=d.insurance_audit.length?d.insurance_audit.map(p=>`<tr><td class="fn">${p.policy_name}</td><td class="nc ${p.irr<6?'ib':'ig'}">${p.irr}% IRR</td><td class="nc lk">\u20b9${fmts(p.opportunity_cost)}/yr</td></tr>`).join(''):`<tr><td colspan="3" class="emp">No insurance data provided</td></tr>`;
+  const gR=d.gold_audit.length?d.gold_audit.map(g=>`<tr><td class="fn">${g.type}</td><td class="nc lk">\u20b9${fmts(g.annual_leakage)}/yr</td><td class="nc">\u20b9${fmts(g.leakage_10yr_compounded)}</td></tr>`).join(''):`<tr><td colspan="3" class="emp">No gold data provided</td></tr>`;
+  const eR=d.equity_audit.length?d.equity_audit.map(e=>`<tr><td class="fn">${e.type}</td><td class="nc lk">\u20b9${fmts(e.annual_leakage)}/yr</td><td class="nc">\u20b9${fmts(e.leakage_10yr_compounded)}</td></tr>`).join(''):`<tr><td colspan="3" class="emp">No equity data provided</td></tr>`;
 
-  const mfR = d.regular_vs_direct_leakage.map(f =>
-    '<tr><td class="fn">'+f.scheme_name+'</td><td class="nc lk">₹'+fmts(f.annual_leakage)+'/yr<div class="mb"><div class="mbf" style="width:'+Math.min(100,(f.annual_leakage/Math.max(mt,1))*100).toFixed(0)+'%"></div></div></td><td class="nc">₹'+fmts(f.leakage_5yr_compounded)+'</td><td class="nc">₹'+fmts(f.leakage_10yr_compounded)+'</td></tr>'
-  ).join('');
-
-  const iR = d.insurance_audit.length
-    ? d.insurance_audit.map(p=>'<tr><td class="fn">'+p.policy_name+'</td><td class="nc '+(p.irr<6?'ib':'ig')+'">'+p.irr+'% IRR</td><td class="nc lk">₹'+fmts(p.opportunity_cost)+'/yr</td></tr>').join('')
-    : '<tr><td colspan="3" class="emp">No insurance data provided</td></tr>';
-
-  const gR = d.gold_audit.length
-    ? d.gold_audit.map(g=>'<tr><td class="fn">'+g.type+'</td><td class="nc lk">₹'+fmts(g.annual_leakage)+'/yr</td><td class="nc">₹'+fmts(g.leakage_10yr_compounded)+'</td></tr>').join('')
-    : '<tr><td colspan="3" class="emp">No gold data provided</td></tr>';
-
-  const eR = d.equity_audit.length
-    ? d.equity_audit.map(e=>'<tr><td class="fn">'+e.type+'</td><td class="nc lk">₹'+fmts(e.annual_leakage)+'/yr</td><td class="nc">₹'+fmts(e.leakage_10yr_compounded)+'</td></tr>').join('')
-    : '<tr><td colspan="3" class="emp">No equity data provided</td></tr>';
-
-  el.innerHTML =
-    '<div class="sbanner">'
-    +'<div><div class="slbl">Netara Score</div><div class="snum">'+sc+'<span>/ 10</span></div></div>'
-    +'<div><div class="slbl">Portfolio Efficiency Audit</div><div class="sttl">Total Net Yield Report</div><div class="ssub">'+(ps.total_funds||d.regular_vs_direct_leakage.length)+' funds · '+(ps.regular_funds||d.regular_vs_direct_leakage.length)+' regular · '+d.insurance_audit.length+' insurance · '+d.gold_audit.length+' gold</div></div>'
-    +'<div class="stot"><div class="stot-l">Annual drag</div><div class="stot-n">'+fmt(tot)+'</div><div class="stot-s">recoverable per year</div></div>'
-    +'</div>'
-    +'<div class="pstrip">'
-    +'<div class="pbox"><div class="pyr">5-year cost</div><div class="pval">'+fmt(cmpd(tot,5))+'</div><div class="psub">at 12% CAGR</div></div>'
-    +'<div class="pbox"><div class="pyr">10-year cost</div><div class="pval">'+fmt(cmpd(tot,10))+'</div><div class="psub">at 12% CAGR</div></div>'
-    +'<div class="pbox"><div class="pyr">20-year cost</div><div class="pval">'+fmt(cmpd(tot,20))+'</div><div class="psub">at 12% CAGR</div></div>'
-    +'</div>'
-    +'<div class="rsec"><div class="sey">Mutual Fund Audit</div><div class="stitle">Regular Plan Commission Drag</div>'
-    +'<table class="rt"><thead><tr><th>Fund (Regular Plan)</th><th class="r">Annual Leakage</th><th class="r">5-Year Drag</th><th class="r">10-Year Drag</th></tr></thead>'
-    +'<tbody>'+mfR+'<tr class="tr2"><td><strong>Total MF Leakage</strong></td><td class="nc lk"><strong>₹'+fmts(mt)+'/yr</strong></td><td class="nc"><strong>₹'+fmts(cmpd(mt,5))+'</strong></td><td class="nc"><strong>₹'+fmts(cmpd(mt,10))+'</strong></td></tr></tbody></table>'
-    +'<p style="font-size:11px;color:var(--ink-faint);margin-top:7px;font-style:italic;">Leakage at 1% trail commission. Switching to direct plans eliminates this with zero portfolio change.</p></div>'
-    +'<div class="rsec"><div class="sey">Insurance Audit</div><div class="stitle">Policy IRR &amp; Opportunity Cost</div>'
-    +'<table class="rt"><thead><tr><th>Policy</th><th class="r">Net IRR</th><th class="r">Annual Opportunity Cost</th></tr></thead><tbody>'+iR+'</tbody></table></div>'
-    +'<div class="rsec"><div class="sey">Gold Audit</div><div class="stitle">Physical Gold vs SGB</div>'
-    +'<table class="rt"><thead><tr><th>Type</th><th class="r">Annual Leakage</th><th class="r">10-Year Drag</th></tr></thead><tbody>'+gR+'</tbody></table></div>'
-    +'<div class="rsec"><div class="sey">Equity Audit</div><div class="stitle">Brokerage, STT &amp; Idle Cash</div>'
-    +'<table class="rt"><thead><tr><th>Type</th><th class="r">Annual Leakage</th><th class="r">10-Year Drag</th></tr></thead><tbody>'+eR+'</tbody></table></div>'
-    +'<div class="acta"><div><div class="acta-ey">Next step</div><div class="acta-h">Get your full report with action plan.</div><div class="acta-s">Free. No product recommendations.</div></div>'
-    +'<button class="acta-btn" onclick="window.open('https://netara.beehiiv.com/subscribe?utm_source=audit','_blank')">Get Full Report →</button></div>';
-
+  el.innerHTML=`
+  <div class="sbanner">
+    <div><div class="slbl">Netara Score</div><div class="snum">${sc}<span>/ 10</span></div></div>
+    <div><div class="slbl">Portfolio Efficiency Audit</div><div class="sttl">Total Net Yield Report</div><div class="ssub">${ps.total_funds||d.regular_vs_direct_leakage.length} funds \u00b7 ${ps.regular_funds||d.regular_vs_direct_leakage.length} regular \u00b7 ${d.insurance_audit.length} insurance \u00b7 ${d.gold_audit.length} gold</div></div>
+    <div class="stot"><div class="stot-lbl">Annual drag</div><div class="stot-num">${fmt(tot)}</div><div class="stot-sub">recoverable per year</div></div>
+  </div>
+  <div class="pstrip">
+    <div class="pbox"><div class="pyr">5-year cost</div><div class="pval">${fmt(cmpd(tot,5))}</div><div class="psub">at 12% CAGR</div></div>
+    <div class="pbox"><div class="pyr">10-year cost</div><div class="pval">${fmt(cmpd(tot,10))}</div><div class="psub">at 12% CAGR</div></div>
+    <div class="pbox"><div class="pyr">20-year cost</div><div class="pval">${fmt(cmpd(tot,20))}</div><div class="psub">at 12% CAGR</div></div>
+  </div>
+  <div class="rsec"><div class="sey">Mutual Fund Audit</div><div class="stitle">Regular Plan Commission Drag</div>
+  <table class="rt"><thead><tr><th>Fund (Regular Plan)</th><th class="r">Annual Leakage</th><th class="r">5-Year Drag</th><th class="r">10-Year Drag</th></tr></thead>
+  <tbody>${mfR}<tr class="tr2"><td><strong>Total MF Leakage</strong></td><td class="nc lk"><strong>\u20b9${fmts(mt)}/yr</strong></td><td class="nc"><strong>\u20b9${fmts(cmpd(mt,5))}</strong></td><td class="nc"><strong>\u20b9${fmts(cmpd(mt,10))}</strong></td></tr></tbody></table>
+  <p style="font-size:11px;color:var(--ink-faint);margin-top:7px;font-style:italic;">Leakage at 1% trail commission. Switching to direct plans eliminates this with zero portfolio change.</p></div>
+  <div class="rsec"><div class="sey">Insurance Audit</div><div class="stitle">Policy IRR &amp; Opportunity Cost</div>
+  <table class="rt"><thead><tr><th>Policy</th><th class="r">Net IRR</th><th class="r">Annual Opportunity Cost</th></tr></thead><tbody>${iR}</tbody></table></div>
+  <div class="rsec"><div class="sey">Gold Audit</div><div class="stitle">Physical Gold vs SGB</div>
+  <table class="rt"><thead><tr><th>Type</th><th class="r">Annual Leakage</th><th class="r">10-Year Drag</th></tr></thead><tbody>${gR}</tbody></table></div>
+  <div class="rsec"><div class="sey">Equity Audit</div><div class="stitle">Brokerage, STT &amp; Idle Cash</div>
+  <table class="rt"><thead><tr><th>Type</th><th class="r">Annual Leakage</th><th class="r">10-Year Drag</th></tr></thead><tbody>${eR}</tbody></table></div>
+  <div class="acta">
+    <div><div class="acta-ey">Next step</div><div class="acta-h">Get your full report with action plan.</div><div class="acta-s">Free. No product recommendations.</div></div>
+    <button class="acta-btn" onclick="window.open('https://netara.beehiiv.com/subscribe?utm_source=audit','_blank')">Get Full Report \u2192</button>
+  </div>`;
   el.classList.add('show');
-  el.scrollIntoView({behavior:'smooth', block:'start'});
-  log('Results rendered ✓', 'ok');
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+  log('Results rendered \u2713','ok');
 }
+
+initPy();
 </script>
 </body>
 </html>
