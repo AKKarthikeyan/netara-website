@@ -199,8 +199,7 @@ function parseCams(text) {
   for (var pi = 1; pi < parts.length; pi++) {
     var block = "Folio N" + parts[pi];
     var lines = [];
-    var rawLines = block.split("
-");
+    var rawLines = block.split("\n");
     for (var li = 0; li < rawLines.length; li++) {
       var l = rawLines[li].trim();
       if (l) lines.push(l);
