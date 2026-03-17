@@ -1,1 +1,1 @@
-{"cleanUrls":true,"trailingSlash":false,"functions":{"api/audit.py":{"runtime":"vercel-python@3.0.7"}},"rewrites":[{"source":"/audit","destination":"/audit/index.html"},{"source":"/learn/regular-vs-direct-mutual-fund","destination":"/learn/regular-vs-direct-mutual-fund/index.html"}]}
+{"cleanUrls":true,"trailingSlash":false,"rewrites":[{"source":"/audit","destination":"/audit/index.html"},{"source":"/learn/regular-vs-direct-mutual-fund","destination":"/learn/regular-vs-direct-mutual-fund/index.html"}]}
